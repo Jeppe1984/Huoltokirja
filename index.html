@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Huoltokirja</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+html,body{margin:0}[hidden]{display:none!important}img{max-width:100%}
+/* Layout: kojelauta-tyylinen yläpalkki (mittarilukema + muistutukset), välilehdet, kirjausrivit kuin huoltokirjan leimat */
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --ink:#172027; --ink2:#4A5863; --muted:#7A8892; --line:#DCE3E8;
+  --accent:#9A5B00; --accent-fill:#C27A12; --s-fuel:#2F6F9F; --s-parts:#C27A12;
+  --ok:#2E7D4F; --ok-bg:#E3F2E8; --warn:#8A5A00; --warn-bg:#FBEFD6; --bad:#B3261E; --bad-bg:#FBE4E2;
+  --odo-bg:#172027; --odo-ink:#F3D27A;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161A; --surface:#1A2126; --ink:#E6ECEF; --ink2:#AAB7BF; --muted:#7D8B94; --line:#2B353C;
+  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F;
+  --ok:#7CCB98; --ok-bg:#1C3326; --warn:#F0C060; --warn-bg:#3A2E14; --bad:#F2928A; --bad-bg:#3E1E1C;
+  --odo-bg:#0A0D10; --odo-ink:#F3D27A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161A; --surface:#1A2126; --ink:#E6ECEF; --ink2:#AAB7BF; --muted:#7D8B94; --line:#2B353C;
+  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F;
+  --ok:#7CCB98; --ok-bg:#1C3326; --warn:#F0C060; --warn-bg:#3A2E14; --bad:#F2928A; --bad-bg:#3E1E1C;
+  --odo-bg:#0A0D10; --odo-ink:#F3D27A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:2.1rem;line-height:1}
+h2{font-size:1.35rem;text-transform:uppercase;letter-spacing:.05em}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono)}
+.lbl{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+header.top{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.plate{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:5px;padding:1px 10px 1px 0;font-family:var(--f-display);font-weight:700;font-size:1.15rem;letter-spacing:.08em;background:var(--surface)}
+.plate .eu{background:#1F4FA8;color:#fff;font-size:.62rem;padding:6px 5px;border-radius:2px 0 0 2px;line-height:1}
+.sub{color:var(--ink2);margin-top:6px}
+.odo{background:var(--odo-bg);color:var(--odo-ink);font-family:var(--f-mono);font-size:1.6rem;padding:6px 12px;border-radius:6px;letter-spacing:.12em;display:inline-block}
+.odo small{font-size:.75rem;letter-spacing:.05em;opacity:.75;margin-left:6px}
+nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+nav.tabs a{font-family:var(--f-display);font-weight:600;font-size:1.05rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);text-decoration:none;padding:8px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent-fill)}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-fill);outline-offset:2px}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.kpi .v{font-family:var(--f-display);font-weight:600;font-size:1.75rem;line-height:1.1}
+.kpi .v small{font-size:.95rem;color:var(--ink2);font-weight:500;margin-left:3px}
+.kpi .d{font-size:.82rem;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+.two{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+section{margin-top:18px}
+.rem{display:flex;flex-direction:column}
+.rem-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.rem-row:first-child{border-top:0;padding-top:0}
+.rem-row .meta{font-size:.84rem;color:var(--ink2)}
+.bar{grid-column:1/-1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.neutral{background:var(--bg);color:var(--ink2);border:1px solid var(--line)}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.legend{display:flex;gap:14px;font-size:.84rem;color:var(--ink2);flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:.8rem;padding:6px 9px;border-radius:5px;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px));z-index:5;line-height:1.35}
+.tip b{font-weight:700}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.toolbar .left{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn{font-family:var(--f-body);font-size:.92rem;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 13px;cursor:pointer}
+button:hover{border-color:var(--ink2)}
+button.primary{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
+button.primary:hover{filter:brightness(1.07)}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button.danger.arm{background:var(--bad);color:#fff}
+button[disabled]{opacity:.5;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 11px;font-weight:600;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;background:var(--bg);position:sticky;top:0}
+td.r,th.r{text-align:right}
+td.wrapcell{white-space:normal;min-width:220px}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+tfoot td{font-weight:700;border-bottom:0}
+.log{display:flex;flex-direction:column;gap:12px}
+.entry{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 16px;cursor:pointer}
+.entry:hover{border-color:var(--ink2)}
+.stamp{border:2px solid var(--accent);color:var(--accent);border-radius:6px;padding:4px 8px;text-align:center;font-family:var(--f-display);font-weight:700;line-height:1.05;transform:rotate(-3deg);align-self:start;min-width:74px}
+.stamp .y{font-size:.8rem;letter-spacing:.08em}
+.stamp .dm{font-size:1.25rem}
+.entry .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.entry .tags span{font-size:.8rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 7px}
+.entry .parts{font-size:.84rem;color:var(--ink2);margin-top:8px}
+.entry .side{text-align:right}
+@media (max-width:560px){.entry{grid-template-columns:auto minmax(0,1fr)}.entry .side{grid-column:2;text-align:left}}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{display:grid;grid-template-columns:84px 14px minmax(0,1fr) auto;gap:10px;padding:7px 0;align-items:baseline;border-top:1px solid var(--line)}
+.timeline li:first-child{border-top:0}
+.timeline .dot{width:9px;height:9px;border-radius:50%;align-self:center}
+.timeline .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{color:var(--ink2);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:8px}
+.notice{font-size:.86rem;color:var(--ink2);margin-top:6px}
+/* lomake-paneeli */
+.overlay{position:fixed;inset:0;background:rgba(10,14,17,.55);z-index:20;display:flex;justify-content:flex-end}
+.sheet{background:var(--surface);width:min(460px,100%);height:100%;overflow-y:auto;padding:20px max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:14px}
+.sheet h2{display:flex;justify-content:space-between;align-items:center}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:.78rem;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea{font:inherit;font-size:.95rem;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+.calc{background:var(--bg);border-radius:6px;padding:10px 12px;font-size:.9rem;color:var(--ink2)}
+.calc b{color:var(--ink)}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.86rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink)}
+.checks input{width:auto;margin:0;accent-color:var(--accent-fill)}
+.checks label:has(input:checked){border-color:var(--accent-fill);background:var(--warn-bg)}
+.actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+.err{color:var(--bad);font-size:.86rem}
+.carbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.carbar select{width:auto;min-width:180px;font-weight:600}
+.field label.toggle{text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink);font-weight:400;margin-bottom:6px}.field label.toggle b{font-weight:700}.toggle{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.toggle input{width:auto;margin-top:3px;accent-color:var(--accent-fill)}.toggle small{display:block;color:var(--ink2);font-weight:400}
+.shop-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) auto;gap:8px;align-items:center;margin-bottom:8px}.shop-row .cnt{grid-column:1/-1;font-size:.8rem;color:var(--muted);margin-top:-4px}
+.dbs-ok{color:var(--ok)}.dbs-warn{color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-weight:600;z-index:30}
+.set-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 80px auto;gap:8px;align-items:center;margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="plate"><span class="eu">FIN</span><span id="h-plate">ABC-123</span></div>
+      <h1 style="margin-top:10px" id="h-name">Oma auto</h1>
+      <div class="carbar"><select id="car-sel" aria-label="Valitse auto" hidden></select><button id="car-add" type="button">+ Lisää auto</button></div>
+      <div class="sub" id="subline">Sähköinen huoltokirja</div>
+      <div class="sub" id="dbstatus" style="font-size:.85rem"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="lbl" style="margin-bottom:4px">Mittarilukema</div>
+      <div class="odo num" id="odo">——————<small>km</small></div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Näkymät">
+    <a href="#yleiskuva" data-tab="yleiskuva">Yleiskuva</a>
+    <a href="#tankkaukset" data-tab="tankkaukset">Tankkaukset</a>
+    <a href="#huollot" data-tab="huollot">Huollot</a>
+    <a href="#varaosat" data-tab="varaosat">Varaosat</a>
+    <a href="#asetukset" data-tab="asetukset">Asetukset</a>
+  </nav>
+
+  <main id="view"><div class="empty">Ladataan huoltokirjaa…</div></main>
+</div>
+
+<div id="overlay" class="overlay" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(() => {
+const DEFAULT_GLOBAL = {
+  polttoaineet:["95E10","98E5","85RE","Di"],
+  kaupat:[],
+  luokat:["Suodatin","Polttimo","Lisävaruste","Pyyhkijä","Jarru","Alusta","Kemikaali"],
+  huoltamot:[]
+};
+const GLOBAL_KEYS = Object.keys(DEFAULT_GLOBAL);
+const DEFAULT_CAR = {
+  auto:"Oma auto", rekisteri:"", katsastus:"",
+  huoltovalit:[{nimi:"Moottoriöljy + suodatin",km:15000,kk:12},{nimi:"Raitisilmasuodatin",km:15000,kk:12},{nimi:"Ilmansuodatin",km:30000,kk:24},{nimi:"Jarruneste",km:null,kk:24}],
+  kohteet:["Moottoriöljy + suodatin","Vaihteistoöljy","Ilmansuodatin","Raitisilmasuodatin","Jarruneste","Pyyhkijänsulat","Renkaiden vaihto"],
+  ominaisuudet:{kulutus:true, varaosat:true}
+};
+const DEFAULT_SETTINGS = {...DEFAULT_GLOBAL, ...DEFAULT_CAR};
+const clone = o => JSON.parse(JSON.stringify(o));
+const S = { tank:[], huolto:[], osat:[], settings:clone(DEFAULT_SETTINGS), global:clone(DEFAULT_GLOBAL), cars:[], active:null, loaded:{tank:true,huolto:true,osat:true,set:true}, canWrite:true, downloads:true, file:null, savedAt:null, osatFilter:"kaikki", range:"12" };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n, d=0) => (n==null||isNaN(n)) ? "–" : Number(n).toLocaleString("fi-FI",{minimumFractionDigits:d,maximumFractionDigits:d});
+const eur = (n, d=2) => fmt(n,d) + " €";
+const toDate = s => s ? new Date(s + "T12:00:00") : null;
+const dstr = s => { if(!s) return "–"; const [y,m,d]=s.split("-"); return `${+d}.${+m}.${y}`; };
+const today = () => { const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; };
+const daysBetween = (a,b) => Math.round((toDate(b)-toDate(a))/86400000);
+const addMonths = (s,m) => { const d=toDate(s); d.setMonth(d.getMonth()+m); return d.toISOString().slice(0,10); };
+const addDays = (s,n) => { const d=toDate(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const MONTHS = ["tammi","helmi","maalis","huhti","touko","kesä","heinä","elo","syys","loka","marras","joulu"];
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2200); }
+
+/* ---------- ominaisuudet ---------- */
+const on = f => (S.settings.ominaisuudet||{})[f] !== false;
+const OSAT = () => on("varaosat") ? S.osat : [];
+const TANK = () => on("kulutus") ? S.tank : [];
+
+/* ---------- laskenta ---------- */
+function fuelRows(){
+  const rows = [...TANK()].sort((a,b)=> (a.odo-b.odo) || a.pvm.localeCompare(b.pvm));
+  return rows.map((r,i)=>{
+    const prev = rows[i-1];
+    const trip = prev ? r.odo - prev.odo : null;
+    const summa = (r.litrat||0)*(r.hinta||0);
+    const l100 = trip>0 ? r.litrat/trip*100 : null;
+    const pv = prev ? daysBetween(prev.pvm, r.pvm) : null;
+    return {...r, trip, summa, l100, pv, eurkm: trip>0 ? summa/trip : null};
+  });
+}
+function latestOdo(){
+  let m = 0;
+  TANK().forEach(r=> m=Math.max(m, r.odo||0));
+  S.huolto.forEach(r=> m=Math.max(m, r.odo||0));
+  OSAT().forEach(r=> m=Math.max(m, r.odo||0));
+  return m || null;
+}
+function stats(){
+  const f = fuelRows();
+  const recs = [...TANK().map(r=>({pvm:r.pvm,odo:r.odo})), ...S.huolto.map(r=>({pvm:r.pvm,odo:r.odo})), ...OSAT().filter(r=>r.odo&&r.asennus).map(r=>({pvm:r.asennus,odo:r.odo}))].filter(r=>r.pvm&&r.odo).sort((a,b)=>a.pvm.localeCompare(b.pvm)||a.odo-b.odo);
+  const allDates = [...TANK().map(r=>r.pvm), ...S.huolto.map(r=>r.pvm), ...OSAT().map(r=>r.hankinta)].filter(Boolean).sort();
+  const first = recs[0] || (allDates[0]?{pvm:allDates[0],odo:null}:null), last = recs[recs.length-1];
+  const lastFuel = f[f.length-1];
+  const tripRows = f.filter(r=>r.trip>0);
+  const km = tripRows.reduce((s,r)=>s+r.trip,0);
+  const litres = tripRows.reduce((s,r)=>s+r.litrat,0);
+  const fuelEur = f.reduce((s,r)=>s+r.summa,0);
+  const partsEur = OSAT().reduce((s,r)=>s+(+r.hinta||0),0);
+  const laborEur = S.huolto.reduce((s,r)=>s+(+r.tyo||0),0);
+  const stock = OSAT().filter(r=>!r.asennus);
+  const stockEur = stock.reduce((s,r)=>s+(+r.hinta||0),0);
+  const odo = latestOdo();
+  const startOdo = first?.odo ?? null;
+  const days = first ? Math.max(1, daysBetween(allDates[0]||first.pvm, today())) : null;
+  const driven = (odo && startOdo) ? odo - startOdo : 0;
+  const kmPerDay = (first && last && last.pvm!==first.pvm) ? (last.odo-first.odo)/daysBetween(first.pvm,last.pvm) : null;
+  const totalEur = fuelEur + partsEur + laborEur;
+  return { f, first, last, km, litres, avgL: km? litres/km*100 : null, fuelEur, partsEur, laborEur, stock, stockEur, odo, driven, days, kmPerDay,
+           totalEur, eurKm: driven? (totalEur-stockEur)/driven : null, fuelEurKm: km? tripRows.reduce((s,r)=>s+r.summa,0)/km : null,
+           perMonth: days>=30? (totalEur-stockEur)/(days/30.44) : null, lastPrice: lastFuel?.hinta };
+}
+function reminders(st){
+  const out = [];
+  const odo = st.odo;
+  (S.settings.huoltovalit||[]).forEach(iv=>{
+    const done = S.huolto.filter(h=>(h.kohteet||[]).includes(iv.nimi)).sort((a,b)=>b.pvm.localeCompare(a.pvm))[0];
+    if(!done){ out.push({nimi:iv.nimi, state:"neutral", label:"Ei kirjattu", meta:"Ei yhtään kirjausta tälle kohteelle", pct:0}); return; }
+    const kmLeft = iv.km ? (done.odo + iv.km) - odo : null;
+    const dueDate = iv.kk ? addMonths(done.pvm, iv.kk) : null;
+    const dLeft = dueDate ? daysBetween(today(), dueDate) : null;
+    // km-pohjainen arvio päivämäärästä
+    const kmDate = (kmLeft!=null && st.kmPerDay) ? addDays(today(), Math.round(kmLeft/st.kmPerDay)) : null;
+    let state="ok";
+    if((kmLeft!=null && kmLeft<0) || (dLeft!=null && dLeft<0)) state="bad";
+    else if((kmLeft!=null && kmLeft<1500) || (dLeft!=null && dLeft<45)) state="warn";
+    const pctKm = iv.km ? (odo-done.odo)/iv.km : 0;
+    const pctD = iv.kk ? daysBetween(done.pvm, today())/daysBetween(done.pvm, dueDate) : 0;
+    const pct = Math.max(pctKm, pctD);
+    const parts = [];
+    if(iv.km) parts.push(kmLeft>=0 ? `${fmt(kmLeft)} km jäljellä` : `${fmt(-kmLeft)} km yli`);
+    if(iv.kk) parts.push(dLeft>=0 ? `viimeistään ${dstr(dueDate)}` : `erääntyi ${dstr(dueDate)}`);
+    const first = [dueDate, kmDate].filter(Boolean).sort()[0];
+    out.push({nimi:iv.nimi, state, label: state==="bad"?"Myöhässä":state==="warn"?"Pian":"Kunnossa",
+      meta:`Edellinen ${dstr(done.pvm)} @ ${fmt(done.odo)} km · ${parts.join(" · ")}` + (kmDate && iv.km ? ` · km-arvio ${dstr(kmDate)}`:""), pct, first});
+  });
+  if(S.settings.katsastus){
+    const d = daysBetween(today(), S.settings.katsastus);
+    const state = d<0?"bad": d<45?"warn":"ok";
+    out.push({nimi:"Katsastus", state, label: state==="bad"?"Myöhässä":state==="warn"?"Pian":"Kunnossa", meta:`Määräpäivä ${dstr(S.settings.katsastus)} · ${d>=0? d+" pv":"-"+(-d)+" pv"}`, pct: Math.min(1, 1-d/365)});
+  }
+  const order={bad:0,warn:1,ok:2,neutral:3};
+  return out.sort((a,b)=>order[a.state]-order[b.state]);
+}
+function monthly(st, months){
+  const now = new Date(); const keys=[];
+  for(let i=months-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }
+  const m = Object.fromEntries(keys.map(k=>[k,{fuel:0,parts:0}]));
+  st.f.forEach(r=>{ const k=r.pvm.slice(0,7); if(m[k]) m[k].fuel+=r.summa; });
+  OSAT().forEach(r=>{ const k=(r.hankinta||"").slice(0,7); if(m[k]) m[k].parts+=(+r.hinta||0); });
+  S.huolto.forEach(r=>{ const k=(r.pvm||"").slice(0,7); if(m[k]) m[k].parts+=(+r.tyo||0); });
+  return keys.map(k=>({k, ...m[k]}));
+}
+
+/* ---------- kaaviot ---------- */
+function lineChart(el, rows){
+  const pts = rows.filter(r=>r.l100!=null);
+  if(pts.length<2){ el.innerHTML='<div class="empty">Kulutuskäyrä näkyy, kun tankkauksia on vähintään kolme.</div>'; return; }
+  const W=640,H=230,L=40,R=14,T=14,B=28;
+  const t0=toDate(pts[0].pvm).getTime(), t1=toDate(pts[pts.length-1].pvm).getTime();
+  const vals=pts.map(p=>p.l100); let lo=Math.floor(Math.min(...vals)-.5), hi=Math.ceil(Math.max(...vals)+.5);
+  const x=t=>L+(t-t0)/(t1-t0||1)*(W-L-R), y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+  let g='';
+  for(let v=lo; v<=hi; v++){ g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`; }
+  // kuukausimerkit
+  const d0=new Date(t0); let d=new Date(d0.getFullYear(), d0.getMonth()+1, 1); let i=0;
+  while(d.getTime()<=t1){ if(i%3===0){ const xx=x(d.getTime()); g+=`<text x="${xx}" y="${H-8}" text-anchor="middle">${MONTHS[d.getMonth()]}${d.getMonth()===0?" "+String(d.getFullYear()).slice(2):""}</text><line x1="${xx}" x2="${xx}" y1="${H-B}" y2="${H-B+4}" stroke="var(--line)"/>`; } d=new Date(d.getFullYear(), d.getMonth()+1,1); i++; }
+  const avg = rows.filter(r=>r.trip>0).reduce((s,r)=>s+r.litrat,0) / rows.filter(r=>r.trip>0).reduce((s,r)=>s+r.trip,0) * 100;
+  const path = pts.map((p,i)=>`${i?"L":"M"}${x(toDate(p.pvm).getTime()).toFixed(1)},${y(p.l100).toFixed(1)}`).join("");
+  const area = path + `L${x(t1)},${H-B}L${x(t0)},${H-B}Z`;
+  const lp = pts[pts.length-1];
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kulutus litraa sadalla kilometrillä tankkauksittain">
+    ${g}
+    <path d="${area}" fill="var(--s-fuel)" opacity=".10"/>
+    <line x1="${L}" x2="${W-R}" y1="${y(avg)}" y2="${y(avg)}" stroke="var(--ink2)" stroke-dasharray="4 4" stroke-width="1"/>
+    <text x="${W-R}" y="${y(avg)-6}" text-anchor="end" style="fill:var(--ink2)">ka ${fmt(avg,2)}</text>
+    <path d="${path}" fill="none" stroke="var(--s-fuel)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(toDate(lp.pvm).getTime())}" cy="${y(lp.l100)}" r="4.5" fill="var(--s-fuel)" stroke="var(--surface)" stroke-width="2"/>
+    <line class="xh" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="var(--ink2)" stroke-width="1" visibility="hidden"/>
+    <circle class="hp" r="5" fill="var(--s-fuel)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>
+    <rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" class="hit"/>
+  </svg><div class="tip" hidden></div>`;
+  el.innerHTML = svg;
+  const s=el.querySelector("svg"), tip=el.querySelector(".tip"), xh=s.querySelector(".xh"), hp=s.querySelector(".hp");
+  const move = ev => {
+    const r=s.getBoundingClientRect(); const px=(ev.clientX-r.left)/r.width*W;
+    let best=pts[0], bd=1e9; pts.forEach(p=>{const dd=Math.abs(x(toDate(p.pvm).getTime())-px); if(dd<bd){bd=dd;best=p;}});
+    const cx=x(toDate(best.pvm).getTime()), cy=y(best.l100);
+    xh.setAttribute("x1",cx); xh.setAttribute("x2",cx); xh.setAttribute("visibility","visible");
+    hp.setAttribute("cx",cx); hp.setAttribute("cy",cy); hp.setAttribute("visibility","visible");
+    tip.innerHTML=`<b>${dstr(best.pvm)}</b><br>${fmt(best.l100,2)} l/100 km · ${fmt(best.trip)} km<br>${fmt(best.litrat,2)} l à ${fmt(best.hinta,3)} €`;
+    tip.style.left=(cx/W*r.width)+"px"; tip.style.top=(cy/H*r.height)+"px"; tip.hidden=false;
+  };
+  s.addEventListener("pointermove", move); s.addEventListener("pointerdown", move);
+  s.addEventListener("pointerleave", ()=>{tip.hidden=true; xh.setAttribute("visibility","hidden"); hp.setAttribute("visibility","hidden");});
+}
+function barChart(el, data){
+  const W=640,H=230,L=44,R=10,T=14,B=28;
+  const max = Math.max(10, ...data.map(d=>d.fuel+d.parts));
+  const step = max>400?100: max>150?50:25; const hi=Math.ceil(max/step)*step;
+  const bw=(W-L-R)/data.length, y=v=>T+(hi-v)/hi*(H-T-B), gap=Math.min(10,bw*.3);
+  let g='';
+  for(let v=0; v<=hi; v+=step) g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  let bars='';
+  data.forEach((d,i)=>{
+    const x0=L+i*bw+gap/2, w=bw-gap; const [yy,mm]=d.k.split("-");
+    const yf=y(d.fuel), yp=y(d.fuel+d.parts);
+    const rr=Math.min(4,w/2);
+    if(d.fuel>0) bars+=`<path d="M${x0},${H-B}V${yf+ (d.parts>0?0:rr)}${d.parts>0?"":`Q${x0},${yf} ${x0+rr},${yf}H${x0+w-rr}Q${x0+w},${yf} ${x0+w},${yf+rr}`}${d.parts>0?`H${x0+w}`:""}V${H-B}Z" fill="var(--s-fuel)"/>`;
+    if(d.parts>0){ const top=yp, bot=yf-(d.fuel>0?2:0); if(bot-top>0.5) bars+=`<path d="M${x0},${bot}V${top+rr}Q${x0},${top} ${x0+rr},${top}H${x0+w-rr}Q${x0+w},${top} ${x0+w},${top+rr}V${bot}Z" fill="var(--s-parts)"/>`; }
+    bars+=`<text x="${x0+w/2}" y="${H-8}" text-anchor="middle">${MONTHS[+mm-1].slice(0,3)}${+mm===1?" "+yy.slice(2):""}</text>`;
+    bars+=`<rect x="${L+i*bw}" y="${T}" width="${bw}" height="${H-T-B}" fill="transparent" data-i="${i}" class="hit"/>`;
+  });
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kulut kuukausittain">${g}${bars}</svg><div class="tip" hidden></div>`;
+  const s=el.querySelector("svg"), tip=el.querySelector(".tip");
+  s.querySelectorAll(".hit").forEach(h=>{
+    const show=()=>{ const d=data[+h.dataset.i]; const [yy,mm]=d.k.split("-"); const r=s.getBoundingClientRect();
+      const cx=(+h.getAttribute("x")+bw/2); tip.innerHTML=`<b>${MONTHS[+mm-1]}kuu ${yy}</b><br>Polttoaine ${eur(d.fuel)}<br>Osat ja huollot ${eur(d.parts)}<br>Yhteensä ${eur(d.fuel+d.parts)}`;
+      tip.style.left=(cx/W*r.width)+"px"; tip.style.top=(y(d.fuel+d.parts)/H*r.height)+"px"; tip.hidden=false; };
+    h.addEventListener("pointerenter",show); h.addEventListener("pointerdown",show);
+  });
+  s.addEventListener("pointerleave",()=>tip.hidden=true);
+}
+
+/* ---------- näkymät ---------- */
+function addBtn(kind, text){ return S.canWrite ? `<button class="primary" data-add="${kind}">${text}</button>` : ""; }
+function exportBtn(kind){ return S.downloads ? `<button data-export="${kind}">Vie CSV</button>` : ""; }
+
+function viewOverview(){
+  const st = stats();
+  if(!TANK().length && !S.huolto.length && !OSAT().length) return `<div class="empty" style="text-align:left;max-width:640px;margin:0 auto">
+  <h2 style="margin-bottom:8px">Aloita oma huoltokirja</h2>
+  <p>Kirjaa tankkaukset, huollot ja varaosat. Sivu laskee keskikulutuksen, kilometrihinnan ja kuukausikulut ja muistuttaa, kun huolto lähestyy.</p>
+  <ol style="padding-left:20px;margin:10px 0 16px"><li>Anna auton nimi ja rekisteritunnus asetuksissa ja valitse, mitä haluat seurata.</li><li>Tarkista huoltovälit oman autosi huolto-ohjelmasta.</li><li>${on("kulutus")?"Kirjaa ensimmäinen tankkaus. Kulutus lasketaan toisesta täydestä tankkauksesta alkaen.":"Kirjaa ensimmäinen huolto."}</li><li>Useammalle autolle saat omat huoltokirjat napista Lisää auto.</li></ol>
+  <p class="notice">Tiedot tallentuvat vain omaan selaimeesi, eikä kukaan muu näe niitä.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${on("kulutus")?addBtn("tank","Lisää tankkaus"):""}${S.canWrite?`<button data-add="huolto" class="${on("kulutus")?"":"primary"}">Lisää huolto</button>`:""}<a class="btn" href="#asetukset" style="text-decoration:none">Asetukset</a><label class="btn" for="db-imp2">Avaa varmuuskopio…</label><input id="db-imp2" type="file" accept=".json,application/json" hidden></div></div>`;
+  const rem = reminders(st);
+  const months = +S.range;
+  const kpi = (l,v,u,d)=>`<div class="kpi"><span class="lbl">${l}</span><span class="v num">${v}<small>${u}</small></span><span class="d">${d}</span></div>`;
+  const tl = [
+    ...TANK().map(r=>({pvm:r.pvm, c:"var(--s-fuel)", t:`Tankkaus ${fmt(r.litrat,2)} l ${esc(r.polttoaine||"")}`, v:eur(r.litrat*r.hinta)})),
+    ...S.huolto.map(r=>({pvm:r.pvm, c:"var(--ink)", t:`Huolto: ${esc((r.kohteet||[]).join(", ")||r.kuvaus||"")}`, v:r.tyo?eur(r.tyo):""})),
+    ...OSAT().map(r=>({pvm:r.hankinta, c:"var(--s-parts)", t:`Osa: ${esc(r.nimi)}`, v:eur(+r.hinta||0)}))
+  ].sort((a,b)=>b.pvm.localeCompare(a.pvm)).slice(0,8);
+  return `
+  <div class="toolbar"><div class="left"><h2>Tilanne ${dstr(today())}</h2></div><div class="left">${on("kulutus")?addBtn("tank","+ Tankkaus"):""}${S.canWrite?`<button data-add="huolto" class="${on("kulutus")?"":"primary"}">+ Huolto</button>${on("varaosat")?`<button data-add="osa">+ Varaosa</button>`:""}`:""}</div></div>
+  <div class="grid kpis">
+    ${on("kulutus")?kpi("Keskikulutus", fmt(st.avgL,2), "l/100 km", `${fmt(st.km)} km mitattu tankkauksista`):""}
+    ${kpi("Ajettu omistuksessa", fmt(st.driven), "km", st.kmPerDay? `noin ${fmt(st.kmPerDay*30.44)} km kuukaudessa`:"")}
+    ${kpi("Kokonaiskulut", fmt(st.totalEur-st.stockEur,0), "€", [on("kulutus")?`polttoaine ${eur(st.fuelEur,0)}`:"", `${on("varaosat")?"osat ja työ":"huoltotyö"} ${eur(st.partsEur+st.laborEur-st.stockEur,0)}`].filter(Boolean).join(" · "))}
+    ${kpi("Kilometrihinta", fmt(st.eurKm,3), "€/km", on("kulutus")?`polttoaine yksin ${fmt(st.fuelEurKm,3)} €/km`:"huollot ja osat ajetuille kilometreille")}
+    ${kpi("Kuukausikulu", fmt(st.perMonth,0), "€/kk", on("kulutus")?`viimeisin litrahinta ${fmt(st.lastPrice,3)} €`:"omistusajalta laskettuna")}
+  </div>
+  <section class="grid two">
+    <div class="panel"><div class="panel-h"><h2>Huoltomuistutukset</h2><span class="notice" style="margin:0">Välit muokattavissa asetuksissa</span></div>
+      <div class="rem">${rem.length? rem.map(r=>`<div class="rem-row"><div style="min-width:0"><b>${esc(r.nimi)}</b><div class="meta">${esc(r.meta)}</div></div><span class="chip ${r.state}">${r.label}</span>
+        <div class="bar"><i style="width:${Math.max(2,Math.min(100,r.pct*100))}%;background:var(--${r.state==="bad"?"bad":r.state==="warn"?"warn":r.state==="ok"?"ok":"muted"})"></i></div></div>`).join("") : '<div class="empty">Ei huoltovälejä. Lisää ne asetuksissa.</div>'}</div>
+    </div>
+    <div class="panel"><div class="panel-h"><h2>Viimeisimmät</h2></div>
+      <ul class="timeline">${tl.map(e=>`<li><span class="num" style="color:var(--ink2)">${dstr(e.pvm)}</span><span class="dot" style="background:${e.c}"></span><span class="t">${e.t}</span><span class="num">${e.v}</span></li>`).join("")}</ul>
+    </div>
+  </section>
+  <section class="grid ${on("kulutus")?"two":""}">
+    ${on("kulutus")?`<div class="panel"><div class="panel-h"><h2>Kulutus</h2><span class="legend"><span><i style="background:var(--s-fuel)"></i>l/100 km tankkauksittain</span></span></div><div class="chart" id="c-line"></div></div>`:""}
+    <div class="panel"><div class="panel-h"><h2>Kulut kuukausittain</h2>
+      <div class="seg" role="group" aria-label="Aikaväli">${["6","12","24"].map(v=>`<button data-range="${v}" aria-pressed="${S.range===v}">${v} kk</button>`).join("")}</div></div>
+      <div class="legend" style="margin-bottom:8px">${on("kulutus")?`<span><i style="background:var(--s-fuel)"></i>Polttoaine</span>`:""}<span><i style="background:var(--s-parts)"></i>${on("varaosat")?"Osat ja huollot":"Huollot"}</span></div>
+      <div class="chart" id="c-bar"></div></div>
+  </section>`;
+}
+function afterOverview(){ const st=stats(); const a=$("#c-line"), b=$("#c-bar"); if(a) lineChart(a, st.f); if(b) barChart(b, monthly(st, +S.range)); }
+
+function viewTank(){
+  const rows = fuelRows().reverse();
+  const st = stats();
+  return `<div class="toolbar"><div class="left"><h2>Tankkaukset</h2><span class="chip neutral">${rows.length} kpl</span></div><div class="left">${exportBtn("tank")}${addBtn("tank","+ Tankkaus")}</div></div>
+  ${rows.length? `<div class="tbl-wrap"><table><thead><tr><th>Päivä</th><th class="r">Mittari</th><th class="r">Matka</th><th class="r">Litrat</th><th class="r">€/l</th><th class="r">Summa</th><th class="r">l/100</th><th class="r">€/km</th><th>Laatu</th><th>Huom.</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr data-edit="tank" data-id="${esc(r.id)}"><td>${dstr(r.pvm)}</td><td class="r">${fmt(r.odo)}</td><td class="r">${r.trip!=null?fmt(r.trip):"–"}</td><td class="r">${fmt(r.litrat,2)}</td><td class="r">${fmt(r.hinta,3)}</td><td class="r">${fmt(r.summa,2)}</td><td class="r">${r.l100!=null?fmt(r.l100,2):"–"}</td><td class="r">${r.eurkm!=null?fmt(r.eurkm,3):"–"}</td><td>${esc(r.polttoaine)}</td><td>${esc(r.huom||"")}</td></tr>`).join("")}
+  </tbody><tfoot><tr><td>Yhteensä</td><td></td><td class="r">${fmt(st.km)}</td><td class="r">${fmt(rows.reduce((s,r)=>s+r.litrat,0),2)}</td><td></td><td class="r">${fmt(st.fuelEur,2)}</td><td class="r">${fmt(st.avgL,2)}</td><td class="r">${fmt(st.fuelEurKm,3)}</td><td colspan="2"></td></tr></tfoot></table></div>
+  <p class="notice">Kulutus lasketaan olettaen, että jokainen tankkaus on täyteen. Matka on erotus edelliseen tankkaukseen.</p>` : '<div class="empty">Ei tankkauksia vielä.</div>'}`;
+}
+function viewHuolto(){
+  const rows=[...S.huolto].sort((a,b)=>b.pvm.localeCompare(a.pvm));
+  return `<div class="toolbar"><div class="left"><h2>Huoltohistoria</h2><span class="chip neutral">${rows.length} kpl</span></div><div class="left">${exportBtn("huolto")}${addBtn("huolto","+ Huolto")}</div></div>
+  ${rows.length? `<div class="log">${rows.map(h=>{
+    const [y,m,d]=h.pvm.split("-"); const parts=OSAT().filter(o=>o.asennus===h.pvm); const shop=(S.settings.huoltamot||[]).find(x=>x.nimi===h.tekija);
+    const pe=parts.reduce((s,o)=>s+(+o.hinta||0),0);
+    return `<article class="entry" data-edit="huolto" data-id="${esc(h.id)}">
+      <div class="stamp"><div class="y">${y}</div><div class="dm">${+d}.${+m}.</div></div>
+      <div style="min-width:0"><b>${esc(h.tekija||"Itse")}</b>${h.kuvaus?` · ${esc(h.kuvaus)}`:""}${shop?.yhteys?`<div class="notice" style="margin:2px 0 0">${esc(shop.yhteys)}</div>`:""}
+        <div class="tags">${(h.kohteet||[]).map(k=>`<span>${esc(k)}</span>`).join("")}</div>
+        ${parts.length?`<div class="parts">Samana päivänä asennetut osat: ${parts.map(o=>esc(o.nimi)).join(" · ")}</div>`:""}
+        ${h.huom?`<div class="parts">${esc(h.huom)}</div>`:""}</div>
+      <div class="side num"><div class="mono">${fmt(h.odo)} km</div><div class="notice">${on("varaosat")?`Osat ${eur(pe)}`:""}${h.tyo?`${on("varaosat")?" · ":""}työ ${eur(+h.tyo)}`:""}</div></div>
+    </article>`;}).join("")}</div>` : '<div class="empty">Ei huoltoja vielä.</div>'}`;
+}
+function viewOsat(){
+  const st=stats();
+  let rows=[...S.osat].sort((a,b)=>(b.hankinta||"").localeCompare(a.hankinta||""));
+  if(S.osatFilter==="varasto") rows=rows.filter(r=>!r.asennus); else if(S.osatFilter==="asennettu") rows=rows.filter(r=>r.asennus);
+  const f=[["kaikki","Kaikki"],["varasto","Varastossa"],["asennettu","Asennettu"]];
+  return `<div class="toolbar"><div class="left"><h2>Varaosat</h2><div class="seg" role="group" aria-label="Suodatin">${f.map(([k,l])=>`<button data-of="${k}" aria-pressed="${S.osatFilter===k}">${l}</button>`).join("")}</div></div><div class="left">${exportBtn("osat")}${addBtn("osa","+ Varaosa")}</div></div>
+  <div class="grid kpis" style="margin-bottom:16px">
+    <div class="kpi"><span class="lbl">Osat yhteensä</span><span class="v num">${fmt(st.partsEur,2)}<small>€</small></span><span class="d">${S.osat.length} hankintaa</span></div>
+    <div class="kpi"><span class="lbl">Varastossa</span><span class="v num">${fmt(st.stockEur,2)}<small>€</small></span><span class="d">${st.stock.length} osaa asentamatta</span></div>
+  </div>
+  ${rows.length? `<div class="tbl-wrap"><table><thead><tr><th>Hankittu</th><th>Osa</th><th>Luokka</th><th>Kauppa</th><th class="r">Hinta</th><th>Tila</th><th class="r">Varastossa</th></tr></thead><tbody>
+  ${rows.map(r=>{const days=r.asennus? daysBetween(r.hankinta,r.asennus) : daysBetween(r.hankinta,today());
+    return `<tr data-edit="osa" data-id="${esc(r.id)}"><td>${dstr(r.hankinta)}</td><td class="wrapcell">${esc(r.nimi)}</td><td>${esc(r.luokka)}</td><td>${esc(r.kauppa)}</td><td class="r">${fmt(+r.hinta,2)}</td>
+    <td>${r.asennus?`<span class="chip ok">Asennettu ${dstr(r.asennus)}</span>`:'<span class="chip warn">Varastossa</span>'}</td><td class="r">${fmt(days)} pv</td></tr>`;}).join("")}
+  </tbody></table></div>` : '<div class="empty">Ei osia tällä rajauksella.</div>'}`;
+}
+function viewSettings(){
+  const s=S.settings; const dis=S.canWrite?"":"disabled"; const f=s.ominaisuudet||{};
+  const shopCount = n => S.cars.reduce((c,car)=>c+((car===curCar()?S.huolto:car.huollot)||[]).filter(h=>h.tekija===n).length,0);
+  return `<div class="toolbar"><div class="left"><h2>${esc(s.auto||"Oma auto")}</h2>${s.rekisteri?`<span class="chip neutral">${esc(s.rekisteri)}</span>`:""}</div></div>
+  <div class="grid two">
+    <div class="panel"><div class="panel-h"><h2>Auto</h2></div>
+      <div class="fgrid">
+        <div class="field"><label for="s-auto">Nimi</label><input id="s-auto" value="${esc(s.auto||"")}" placeholder="esim. Toyota Yaris" ${dis}></div>
+        <div class="field"><label for="s-rek">Rekisteritunnus</label><input id="s-rek" value="${esc(s.rekisteri||"")}" placeholder="ABC-123" ${dis}></div>
+        <div class="field full"><label for="s-kats">Seuraava katsastus viimeistään</label><input id="s-kats" type="date" value="${esc(s.katsastus||"")}" ${dis}></div>
+        <div class="field full"><label>Seurattavat asiat</label>
+          <label class="toggle" for="s-f-kulutus"><input type="checkbox" id="s-f-kulutus" ${f.kulutus!==false?"checked":""} ${dis}><span><b>Tankkaukset ja kulutus</b><small>Keskikulutus, polttoainekulut ja kulutuskäyrä</small></span></label>
+          <label class="toggle" for="s-f-varaosat"><input type="checkbox" id="s-f-varaosat" ${f.varaosat!==false?"checked":""} ${dis}><span><b>Varaosat ja varasto</b><small>Ostetut osat, ostopaikat ja varastossa odottavat osat</small></span></label>
+          <span class="notice">Pois kytkettyjen asioiden kirjaukset säilyvät ja palaavat näkyviin, kun kytket ne takaisin.</span></div>
+        <div class="field full"><label for="s-kohteet">Huoltokohteet (valintoina huoltolomakkeella)</label><textarea id="s-kohteet" ${dis}>${esc((s.kohteet||[]).join(", "))}</textarea></div>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-h"><h2>Huoltovälit</h2></div>
+      <div class="set-row lbl"><span>Kohde</span><span>km</span><span>kk</span><span></span></div>
+      <div id="iv-list">${(s.huoltovalit||[]).map((iv,i)=>`<div class="set-row"><input id="iv-n-${i}" value="${esc(iv.nimi)}" ${dis} aria-label="Kohde"><input id="iv-k-${i}" type="number" inputmode="numeric" value="${iv.km||""}" ${dis} aria-label="km"><input id="iv-m-${i}" type="number" inputmode="numeric" value="${iv.kk||""}" ${dis} aria-label="kk"><button data-rm-iv="${i}" ${dis} aria-label="Poista">✕</button></div>`).join("")}</div>
+      ${S.canWrite?`<button id="iv-add">+ Lisää huoltoväli</button>`:""}
+      <p class="notice">Kohteen nimen pitää vastata huoltokirjauksen kohdetta. Oletusvälit ovat tyypillisiä bensa-auton arvoja, tarkista ne auton huolto-ohjelmasta.</p>
+    </div>
+  </div>
+  <section class="grid two">
+    <div class="panel"><div class="panel-h"><h2>Huoltamot</h2><span class="notice" style="margin:0">Yhteiset kaikille autoille</span></div>
+      <div class="shop-row lbl"><span>Nimi</span><span>Yhteystiedot</span><span></span></div>
+      <div id="shop-list">${(s.huoltamot||[]).map((h,i)=>`<div class="shop-row"><input id="sh-n-${i}" value="${esc(h.nimi)}" aria-label="Huoltamon nimi" ${dis}><input id="sh-y-${i}" value="${esc(h.yhteys||"")}" placeholder="puhelin, osoite" aria-label="Yhteystiedot" ${dis}><button data-rm-shop="${i}" aria-label="Poista" ${dis}>✕</button>${h.nimi?`<span class="cnt">${shopCount(h.nimi)} ${shopCount(h.nimi)===1?"huolto":"huoltoa"}</span>`:""}</div>`).join("") || '<p class="notice" style="margin-top:0">Ei huoltamoita vielä. Huoltamo lisätään myös automaattisesti, kun kirjoitat uuden nimen huoltolomakkeen Tekijä-kenttään.</p>'}</div>
+      ${S.canWrite?`<button id="shop-add">+ Lisää huoltamo</button>`:""}
+    </div>
+    <div class="panel"><div class="panel-h"><h2>Yhteiset listat</h2></div>
+      <div class="fgrid">
+        <div class="field full"><label for="s-kaupat">Varaosien ostopaikat (pilkulla erotettuna)</label><textarea id="s-kaupat" ${dis}>${esc((s.kaupat||[]).join(", "))}</textarea></div>
+        <div class="field full"><label for="s-luokat">Osaluokat</label><textarea id="s-luokat" ${dis}>${esc((s.luokat||[]).join(", "))}</textarea></div>
+        <div class="field full"><label for="s-pa">Polttoainelaadut</label><input id="s-pa" value="${esc((s.polttoaineet||[]).join(", "))}" ${dis}></div>
+      </div>
+    </div>
+  </section>
+  ${S.canWrite?`<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between"><button class="primary" id="s-save">Tallenna asetukset</button><button class="danger" id="car-del">${S.cars.length>1?"Poista tämä auto":"Tyhjennä huoltokirja"}</button></div>`:""}
+  <section class="panel"><div class="panel-h"><h2>Tietokanta</h2></div>
+    <p style="margin-top:0">${S.file?`Kaikkien autojen kirjaukset tallentuvat automaattisesti tiedostoon <b>${esc(S.file.name)}</b>.`:IN_ARTIFACT?"Kirjaukset tallentuvat vain tähän selaimeen, eikä kukaan muu näe niitä. Jos selaimen tiedot tyhjennetään, kirjaukset katoavat. Lataa siksi varmuuskopio säännöllisesti. Samalla tiedostolla siirrät huoltokirjan toiselle laitteelle: avaa sivu siellä ja valitse Avaa tietokanta.": FS?"Kirjaukset ovat nyt vain tämän selaimen muistissa. Liitä tietokantatiedosto, niin ne kulkevat sivun mukana.":"Tämä selain ei osaa tallentaa suoraan tiedostoon. Lataa tietokanta tiedostoksi aina muutosten jälkeen ja avaa se toisella koneella."}</p>
+    <div class="left" style="display:flex;gap:8px;flex-wrap:wrap">
+      ${FS?`<button class="primary" id="db-new">Tallenna uuteen tiedostoon…</button><button id="db-open">Avaa tietokanta…</button>`:`<button class="primary" id="db-dl">${IN_ARTIFACT?"Lataa varmuuskopio (.json)":"Lataa tietokanta (.json)"}</button><label class="btn" for="db-imp">Avaa tietokanta…</label><input id="db-imp" type="file" accept=".json,application/json" hidden>`}
+      ${S.file?`<button id="db-dl">Lataa varmuuskopio</button>`:""}
+    </div>
+    <p class="notice">Yksi tietokantatiedosto sisältää kaikki autot. Avaaminen korvaa tällä hetkellä näkyvät tiedot tiedoston sisällöllä.${IN_ARTIFACT?"":" Siirto toiselle koneelle: kopioi tämä HTML-tiedosto ja tietokantatiedosto (.json) samaan kansioon, avaa HTML selaimessa ja valitse Avaa tietokanta."}</p>
+  </section>`;
+}
+
+let current="yleiskuva";
+function render(){
+  const tab = (location.hash||"#yleiskuva").slice(1);
+  const tabs = ["yleiskuva", on("kulutus")&&"tankkaukset", "huollot", on("varaosat")&&"varaosat", "asetukset"].filter(Boolean);
+  current = tabs.includes(tab)?tab:"yleiskuva";
+  document.querySelectorAll("nav.tabs a").forEach(a=>a.hidden=!tabs.includes(a.dataset.tab));
+  document.querySelectorAll("nav.tabs a").forEach(a=>{ if(a.dataset.tab===current) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  const odo=latestOdo(); $("#odo").innerHTML = (odo? String(Math.round(odo)).padStart(6,"0") : "——————") + "<small>km</small>";
+  const st = stats();
+  $("#subline").textContent = st.first ? `Omistuksessa ${dstr(st.first.pvm)} alkaen · ${fmt(st.days)} päivää` : "Sähköinen huoltokirja";
+  const v = $("#view");
+  renderHeader();
+  if(!(S.loaded.tank&&S.loaded.huolto&&S.loaded.osat)){ v.innerHTML='<div class="empty">Ladataan huoltokirjaa…</div>'; return; }
+  v.innerHTML = current==="yleiskuva"?viewOverview(): current==="tankkaukset"?viewTank(): current==="huollot"?viewHuolto(): current==="varaosat"?viewOsat(): viewSettings();
+  if(current==="yleiskuva") afterOverview();
+}
+window.addEventListener("hashchange", render);
+
+/* ---------- lomakkeet ---------- */
+const COL = {tank:"tankkaukset", huolto:"huollot", osa:"osat"};
+function listFor(kind){ return kind==="tank"?S.tank: kind==="huolto"?S.huolto: S.osat; }
+function opts(arr, val){ const a=[...(arr||[])]; if(val && !a.includes(val)) a.unshift(val); return a.map(o=>`<option ${o===val?"selected":""}>${esc(o)}</option>`).join(""); }
+function openForm(kind, id){
+  const rec = id ? listFor(kind).find(r=>r.id===id) : null;
+  const ov=$("#overlay"); const ro = !S.canWrite;
+  const odo = latestOdo()||"";
+  let body="", title="";
+  if(kind==="tank"){
+    title = rec?"Tankkaus":"Uusi tankkaus";
+    const lastFuel = fuelRows().slice(-1)[0];
+    body = `<div class="fgrid">
+      <div class="field"><label for="f-pvm">Päivä</label><input id="f-pvm" type="date" value="${esc(rec?.pvm||today())}" required></div>
+      <div class="field"><label for="f-odo">Mittarilukema (km)</label><input id="f-odo" type="number" inputmode="decimal" step="0.1" value="${rec?.odo??""}" placeholder="${odo}" required></div>
+      <div class="field"><label for="f-l">Litrat</label><input id="f-l" type="number" inputmode="decimal" step="0.01" value="${rec?.litrat??""}" required></div>
+      <div class="field"><label for="f-h">Hinta €/l</label><input id="f-h" type="number" inputmode="decimal" step="0.001" value="${rec?.hinta??(lastFuel?.hinta??"")}" required></div>
+      <div class="field"><label for="f-pa">Polttoaine</label><select id="f-pa">${opts(S.settings.polttoaineet, rec?.polttoaine||lastFuel?.polttoaine||"95E10")}</select></div>
+      <div class="field"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}" placeholder="esim. asema"></div>
+      <div class="field full calc" id="f-calc">Täytä lukemat, niin lasken summan ja kulutuksen.</div></div>`;
+  } else if(kind==="huolto"){
+    title = rec?"Huoltokirjaus":"Uusi huoltokirjaus";
+    const kohteet=[...new Set([...(S.settings.kohteet||[]), ...(S.settings.huoltovalit||[]).map(i=>i.nimi), ...(rec?.kohteet||[])])];
+    body = `<div class="fgrid">
+      <div class="field"><label for="f-pvm">Päivä</label><input id="f-pvm" type="date" value="${esc(rec?.pvm||today())}" required></div>
+      <div class="field"><label for="f-odo">Mittarilukema (km)</label><input id="f-odo" type="number" inputmode="decimal" value="${rec?.odo??""}" placeholder="${odo}" required></div>
+      <div class="field full"><label>Tehdyt toimenpiteet</label><div class="checks" id="f-kohteet">${kohteet.map((k,i)=>`<label><input type="checkbox" id="f-k-${i}" value="${esc(k)}" ${(rec?.kohteet||[]).includes(k)?"checked":""}>${esc(k)}</label>`).join("")}</div></div>
+      <div class="field full"><label for="f-uusi">Muu toimenpide (pilkulla useampi)</label><input id="f-uusi" placeholder="esim. Sytytystulpat"></div>
+      <div class="field"><label for="f-tekija">Tekijä (Itse tai huoltamo)</label><input id="f-tekija" list="tekijat" value="${esc(rec?.tekija||"Itse")}"><datalist id="tekijat"><option>Itse</option>${(S.settings.huoltamot||[]).map(h=>`<option>${esc(h.nimi)}</option>`).join("")}</datalist></div>
+      <div class="field"><label for="f-tyo">Työn hinta €</label><input id="f-tyo" type="number" inputmode="decimal" step="0.01" value="${rec?.tyo||""}" placeholder="0"></div>
+      <div class="field full"><label for="f-kuvaus">Lyhyt kuvaus</label><input id="f-kuvaus" value="${esc(rec?.kuvaus||"")}" placeholder="esim. Syyshuolto"></div>
+      <div class="field full"><label for="f-huom">Muistiinpanot</label><textarea id="f-huom">${esc(rec?.huom||"")}</textarea></div>
+      <p class="notice full" style="grid-column:1/-1">Osat, joiden asennuspäivä on sama kuin huollon päivä, liitetään kirjaukseen automaattisesti.</p></div>`;
+  } else {
+    title = rec?"Varaosa":"Uusi varaosa";
+    body = `<div class="fgrid">
+      <div class="field full"><label for="f-nimi">Osa</label><input id="f-nimi" value="${esc(rec?.nimi||"")}" placeholder="esim. Öljynsuodatin BOSCH F 026 407 092" required></div>
+      <div class="field"><label for="f-luokka">Luokka</label><select id="f-luokka">${opts(S.settings.luokat, rec?.luokka||"")}</select></div>
+      <div class="field"><label for="f-kauppa">Kauppa</label><input id="f-kauppa" list="kaupat" value="${esc(rec?.kauppa||"")}"><datalist id="kaupat">${(S.settings.kaupat||[]).map(k=>`<option>${esc(k)}</option>`).join("")}</datalist></div>
+      <div class="field"><label for="f-hankinta">Hankittu</label><input id="f-hankinta" type="date" value="${esc(rec?.hankinta||today())}" required></div>
+      <div class="field"><label for="f-hinta">Hinta €</label><input id="f-hinta" type="number" inputmode="decimal" step="0.01" value="${rec?.hinta??""}" required></div>
+      <div class="field"><label for="f-asennus">Asennettu (tyhjä = varastossa)</label><input id="f-asennus" type="date" value="${esc(rec?.asennus||"")}"></div>
+      <div class="field"><label for="f-odo">Mittari asennettaessa</label><input id="f-odo" type="number" inputmode="decimal" value="${rec?.odo??""}"></div>
+      <div class="field full"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}"></div></div>`;
+  }
+  ov.innerHTML = `<form class="sheet" id="sheet" novalidate>
+    <h2>${title}<button type="button" data-close aria-label="Sulje">✕</button></h2>${body}<div class="err" id="f-err" hidden></div>
+    <div class="actions">${rec&&!ro?`<button type="button" class="danger" id="f-del">Poista</button>`:"<span></span>"}<span style="display:flex;gap:8px"><button type="button" data-close>Peruuta</button>${ro?"":`<button type="submit" class="primary" id="f-save">Tallenna</button>`}</span></div></form>`;
+  ov.hidden=false;
+  if(ro) ov.querySelectorAll("input,select,textarea").forEach(e=>e.disabled=true);
+  ov.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeForm);
+  ov.onclick = e=>{ if(e.target===ov) closeForm(); };
+  if(kind==="tank"){ const upd=()=>{ const l=+$("#f-l").value, h=+$("#f-h").value, o=+$("#f-odo").value;
+      const prev = fuelRows().filter(r=>r.id!==rec?.id && r.odo<o).slice(-1)[0];
+      let t = l&&h ? `Summa <b>${eur(l*h)}</b>` : "Täytä lukemat, niin lasken summan ja kulutuksen.";
+      if(prev && o && l){ const tr=o-prev.odo; t += ` · matka <b>${fmt(tr,1)} km</b> · kulutus <b>${fmt(l/tr*100,2)} l/100 km</b>`; }
+      $("#f-calc").innerHTML=t; };
+    ["#f-l","#f-h","#f-odo"].forEach(s=>$(s).addEventListener("input",upd)); upd(); }
+  const del=$("#f-del"); if(del){ del.onclick=async()=>{ if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent="Vahvista poisto"; return; }
+      const L=listFor(kind); L.splice(L.findIndex(r=>r.id===rec.id),1); await commit(); toast("Poistettu"); closeForm(); }; }
+  $("#sheet").onsubmit = async e=>{ e.preventDefault(); if(ro) return; await save(kind, rec); };
+  setTimeout(()=>{ const f=ov.querySelector("input:not([type=checkbox])"); f&&f.focus(); },30);
+}
+function closeForm(){ const ov=$("#overlay"); ov.hidden=true; ov.innerHTML=""; }
+function showErr(e){ const el=$("#f-err"); if(!el) return toast("Tallennus epäonnistui"); el.hidden=false;
+  el.textContent = e?.code==="invalid_argument" ? "Sinulla ei ole oikeutta muokata tätä huoltokirjaa." : e?.code==="quota_exceeded" ? "Tallennustila on täynnä. Poista vanhoja kirjauksia." : "Tallennus ei onnistunut. Yritä hetken päästä uudelleen."; }
+const num = s => { const v=$(s)?.value; return v===""||v==null ? null : Number(String(v).replace(",",".")); };
+async function save(kind, rec){
+  const err=$("#f-err"); err.hidden=true; let data;
+  if(kind==="tank"){
+    data={pvm:$("#f-pvm").value, odo:num("#f-odo"), litrat:num("#f-l"), hinta:num("#f-h"), polttoaine:$("#f-pa").value, huom:$("#f-huom").value.trim()};
+    if(!data.pvm||!data.odo||!data.litrat||!data.hinta){ err.hidden=false; err.textContent="Täytä päivä, mittarilukema, litrat ja litrahinta."; return; }
+  } else if(kind==="huolto"){
+    const k=[...document.querySelectorAll("#f-kohteet input:checked")].map(i=>i.value);
+    const extra=$("#f-uusi").value.split(",").map(s=>s.trim()).filter(Boolean);
+    data={pvm:$("#f-pvm").value, odo:num("#f-odo"), kohteet:[...new Set([...k,...extra])], tekija:$("#f-tekija").value.trim()||"Itse", tyo:num("#f-tyo")||0, kuvaus:$("#f-kuvaus").value.trim(), huom:$("#f-huom").value.trim()};
+    if(!data.pvm||!data.odo){ err.hidden=false; err.textContent="Täytä päivä ja mittarilukema."; return; }
+    if(!data.kohteet.length && !data.kuvaus){ err.hidden=false; err.textContent="Valitse vähintään yksi toimenpide tai kirjoita kuvaus."; return; }
+  } else {
+    data={nimi:$("#f-nimi").value.trim(), luokka:$("#f-luokka").value, kauppa:$("#f-kauppa").value.trim(), hankinta:$("#f-hankinta").value, hinta:num("#f-hinta"), asennus:$("#f-asennus").value||null, odo:num("#f-odo"), huom:$("#f-huom").value.trim()};
+    if(!data.nimi||!data.hankinta||data.hinta==null){ err.hidden=false; err.textContent="Täytä osan nimi, hankintapäivä ja hinta."; return; }
+  }
+  const btn=$("#f-save"); btn.disabled=true;
+  try{
+    const L=listFor(kind);
+    if(rec){ L[L.findIndex(r=>r.id===rec.id)]={...data, id:rec.id, luotu:rec.luotu||new Date().toISOString(), muokattu:new Date().toISOString()}; }
+    else L.push({...data, id:newId(kind), luotu:new Date().toISOString()});
+    await commit();
+    // uudet kaupat / kohteet asetuksiin
+    if(kind==="osa" && data.kauppa && !(S.settings.kaupat||[]).includes(data.kauppa)) await saveSettings({...S.settings, kaupat:[...(S.settings.kaupat||[]), data.kauppa]}, true);
+    if(kind==="huolto" && data.tekija && data.tekija!=="Itse" && !(S.settings.huoltamot||[]).some(h=>h.nimi===data.tekija)) await saveSettings({...S.settings, huoltamot:[...(S.settings.huoltamot||[]), {nimi:data.tekija, yhteys:""}]}, true);
+    if(kind==="huolto"){ const nk=data.kohteet.filter(k=>!(S.settings.kohteet||[]).includes(k)); if(nk.length) await saveSettings({...S.settings, kohteet:[...(S.settings.kohteet||[]), ...nk]}, true); }
+    toast("Tallennettu"); closeForm();
+  }catch(e){ btn.disabled=false; showErr(e); }
+}
+async function saveSettings(s, quiet){
+  S.settings=s; await commit(); if(!quiet) toast("Asetukset tallennettu");
+}
+
+/* ---------- CSV ---------- */
+async function exportCsv(kind){
+  let head, rows, name;
+  if(kind==="tank"){ head=["Päivä","Mittari","Matka","Litrat","€/l","Summa","l/100km","Polttoaine","Huomio"]; rows=fuelRows().map(r=>[r.pvm,r.odo,r.trip??"",r.litrat,r.hinta,r.summa.toFixed(2),r.l100!=null?r.l100.toFixed(2):"",r.polttoaine,r.huom||""]); name="auto_tankkaukset.csv"; }
+  else if(kind==="huolto"){ head=["Päivä","Mittari","Toimenpiteet","Tekijä","Työ €","Kuvaus","Muistiinpanot"]; rows=[...S.huolto].sort((a,b)=>a.pvm.localeCompare(b.pvm)).map(h=>[h.pvm,h.odo,(h.kohteet||[]).join(", "),h.tekija||"",h.tyo||0,h.kuvaus||"",h.huom||""]); name="auto_huollot.csv"; }
+  else { head=["Hankittu","Osa","Luokka","Kauppa","Hinta","Asennettu","Mittari","Huomio"]; rows=[...S.osat].sort((a,b)=>(a.hankinta||"").localeCompare(b.hankinta||"")).map(o=>[o.hankinta,o.nimi,o.luokka,o.kauppa,o.hinta,o.asennus||"",o.odo??"",o.huom||""]); name="auto_varaosat.csv"; }
+  const q=v=>{ const s=String(v??"").replace(".",kind&&typeof v==="number"?",":"."); return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; };
+  const csv="﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n");
+  downloadBlob(new Blob([csv],{type:"text/csv"}), (S.settings.rekisteri||"auto")+"_"+name.split("_").slice(1).join("_"));
+}
+
+/* ---------- tapahtumat ---------- */
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-add],[data-edit],[data-range],[data-of],[data-export],[data-rm-iv],#iv-add,#s-save,#db-new,#db-open,#db-dl,#db-reconnect,#car-add,#car-del,[data-rm-shop],#shop-add");
+  if(!t) return;
+  if(t.id==="db-new") return dbNew();
+  if(t.id==="db-open") return dbOpen();
+  if(t.id==="db-dl") return downloadBlob(new Blob([JSON.stringify(snapshot(),null,1)],{type:"application/json"}), fileBase()+".json").then(ok=>{ if(ok){ try{localStorage.setItem(LS_KEY+"-backup", new Date().toISOString());}catch(_){} render(); } });
+  if(t.id==="db-reconnect") return dbReconnect();
+  if(t.id==="car-add") return openCarForm();
+  if(t.id==="car-del"){ if(!t.classList.contains("arm")){ t.classList.add("arm"); t.textContent= S.cars.length>1?`Vahvista: poista ${S.settings.auto||"auto"} kirjauksineen`:"Vahvista tyhjennys"; return; }
+    removeActiveCar(); return; }
+  if(t.dataset.rmShop!=null){ const sh=readShops(); sh.splice(+t.dataset.rmShop,1); keepSettingsDraft({huoltamot:sh}); return render(); }
+  if(t.id==="shop-add"){ const sh=readShops(); sh.push({nimi:"",yhteys:""}); keepSettingsDraft({huoltamot:sh}); render(); const n=$(`#sh-n-${sh.length-1}`); n&&n.focus(); return; }
+  if(t.dataset.add) return openForm(t.dataset.add);
+  if(t.dataset.edit) return openForm(t.dataset.edit, t.dataset.id);
+  if(t.dataset.range){ S.range=t.dataset.range; try{localStorage.setItem("hk-range",S.range);}catch(_){} return render(); }
+  if(t.dataset.of){ S.osatFilter=t.dataset.of; return render(); }
+  if(t.dataset.export) return exportCsv(t.dataset.export);
+  if(t.dataset.rmIv!=null){ const iv=readIntervals(); iv.splice(+t.dataset.rmIv,1); keepSettingsDraft({huoltovalit:iv}); return render(); }
+  if(t.id==="iv-add"){ const iv=readIntervals(); iv.push({nimi:"",km:null,kk:null}); keepSettingsDraft({huoltovalit:iv}); render(); const last=document.querySelector(`#iv-n-${iv.length-1}`); last&&last.focus(); return; }
+  if(t.id==="s-save"){ const split=s=>$(s).value.split(",").map(x=>x.trim()).filter(Boolean);
+    saveSettings({...S.settings, ...settingsDraft(), huoltovalit:readIntervals().filter(i=>i.nimi), katsastus:$("#s-kats").value||"", kaupat:split("#s-kaupat"), luokat:split("#s-luokat"), kohteet:split("#s-kohteet"), polttoaineet:split("#s-pa")}); }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="car-sel") return switchCar(e.target.value); if((e.target.id==="db-imp"||e.target.id==="db-imp2") && e.target.files[0]) importFile(e.target.files[0]); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#overlay").hidden) closeForm(); });
+function readShops(){ return (S.settings.huoltamot||[]).map((_,i)=>({nimi:($(`#sh-n-${i}`)?.value||"").trim(), yhteys:($(`#sh-y-${i}`)?.value||"").trim()})); }
+function settingsDraft(){ const split=s=>($(s)?.value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  return { auto:$("#s-auto").value.trim()||"Oma auto", rekisteri:$("#s-rek").value.trim().toUpperCase(), katsastus:$("#s-kats").value||"",
+    ominaisuudet:{kulutus:$("#s-f-kulutus").checked, varaosat:$("#s-f-varaosat").checked},
+    huoltamot:readShops().filter(h=>h.nimi), kaupat:split("#s-kaupat"), luokat:split("#s-luokat"), kohteet:split("#s-kohteet"), polttoaineet:split("#s-pa") }; }
+/* lisää/poista-napit renderöivät asetukset uudelleen: pidä muiden kenttien keskeneräiset muutokset */
+function keepSettingsDraft(extra){ const d=settingsDraft(); d.huoltamot=readShops(); S.settings={...S.settings, ...d, huoltovalit:readIntervals(), ...extra}; }
+function readIntervals(){ return (S.settings.huoltovalit||[]).map((_,i)=>({nimi:($(`#iv-n-${i}`)?.value||"").trim(), km:Number($(`#iv-k-${i}`)?.value)||null, kk:Number($(`#iv-m-${i}`)?.value)||null})); }
+
+/* ---------- tallennus ---------- */
+const IN_ARTIFACT = typeof window.claude?.use === "function" || /claude\.ai|claudeusercontent/.test(location.hostname);
+const FS = !IN_ARTIFACT && typeof window.showSaveFilePicker==="function";
+const LS_KEY="huoltokirja-offline-v1";
+const newId = k => k[0]+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fileBase = () => S.cars.length>1 ? "huoltokirja" : (S.settings.rekisteri||"auto")+"_huoltokirja";
+function newCar(asetukset){ return {id:newId("auto"), asetukset:{...clone(DEFAULT_CAR), ...(asetukset||{})}, tankkaukset:[], huollot:[], osat:[]}; }
+const curCar = () => S.cars.find(c=>c.id===S.active);
+function activate(id){
+  const car = S.cars.find(c=>c.id===id) || S.cars[0]; S.active=car.id;
+  S.tank=car.tankkaukset; S.huolto=car.huollot; S.osat=car.osat;
+  S.settings={...clone(DEFAULT_GLOBAL), ...S.global, ...clone(DEFAULT_CAR), ...car.asetukset};
+  S.settings.ominaisuudet={kulutus:true, varaosat:true, ...(car.asetukset.ominaisuudet||{})};
+  S.osatFilter="kaikki";
+}
+function sync(){
+  const car=curCar(); if(!car) return;
+  car.tankkaukset=S.tank; car.huollot=S.huolto; car.osat=S.osat;
+  const g={}, c={}; Object.entries(S.settings).forEach(([k,v])=> (GLOBAL_KEYS.includes(k)?g:c)[k]=v);
+  S.global={...S.global, ...g}; car.asetukset=c;
+}
+function snapshot(){ sync(); return {sovellus:"Huoltokirja", versio:2, tallennettu:new Date().toISOString(), aktiivinen:S.active, yhteiset:S.global, autot:S.cars}; }
+function load(o){
+  let cars, global;
+  if(o && Array.isArray(o.autot)){ cars=o.autot; global=o.yhteiset||{}; }
+  else if(o && Array.isArray(o.tankkaukset)){ // versio 1: yksi auto
+    const a=o.asetukset||{}; global={}; const c={};
+    Object.entries(a).forEach(([k,v])=> (GLOBAL_KEYS.includes(k)?global:c)[k]=v);
+    cars=[{id:newId("auto"), asetukset:c, tankkaukset:o.tankkaukset||[], huollot:o.huollot||[], osat:o.osat||[]}];
+  } else throw new Error("format");
+  if(!cars.length) cars=[newCar()];
+  cars.forEach(car=>{ car.id=car.id||newId("auto"); car.asetukset=car.asetukset||{}; ["tankkaukset","huollot","osat"].forEach((k,i)=>{ car[k]=car[k]||[]; car[k].forEach(r=>{ if(!r.id) r.id=newId("tho"[i]); }); }); });
+  // vanhat huoltokirjaukset: kerää huoltamot tekijöistä
+  global.huoltamot = global.huoltamot || [];
+  cars.forEach(car=>car.huollot.forEach(h=>{ if(h.tekija && h.tekija!=="Itse" && !global.huoltamot.some(x=>x.nimi===h.tekija)) global.huoltamot.push({nimi:h.tekija, yhteys:""}); }));
+  S.global={...clone(DEFAULT_GLOBAL), ...global}; S.cars=cars;
+  activate(o.aktiivinen);
+}
+function switchCar(id){ sync(); activate(id); commit(); }
+function removeActiveCar(){
+  if(S.cars.length>1){ const name=S.settings.auto; S.cars=S.cars.filter(c=>c.id!==S.active); activate(S.cars[0].id); commit(); toast(`${name||"Auto"} poistettu`); }
+  else { const car=newCar(); S.cars=[car]; activate(car.id); commit(); toast("Huoltokirja tyhjennetty"); }
+  location.hash="#yleiskuva";
+}
+function openCarForm(){
+  const ov=$("#overlay");
+  ov.innerHTML=`<form class="sheet" id="sheet" novalidate>
+    <h2>Uusi auto<button type="button" data-close aria-label="Sulje">✕</button></h2>
+    <div class="fgrid">
+      <div class="field full"><label for="c-nimi">Nimi</label><input id="c-nimi" placeholder="esim. Toyota Avensis tai Honda VFR" required></div>
+      <div class="field full"><label for="c-rek">Rekisteritunnus</label><input id="c-rek" placeholder="ABC-123"></div>
+      <div class="field full"><label>Seurattavat asiat</label>
+        <label class="toggle" for="c-f-kulutus"><input type="checkbox" id="c-f-kulutus" checked><span><b>Tankkaukset ja kulutus</b><small>Keskikulutus, polttoainekulut ja kulutuskäyrä</small></span></label>
+        <label class="toggle" for="c-f-varaosat"><input type="checkbox" id="c-f-varaosat" checked><span><b>Varaosat ja varasto</b><small>Ostetut osat ja varastossa odottavat osat</small></span></label></div>
+      <p class="notice full" style="grid-column:1/-1">Huoltamot, ostopaikat ja osaluokat ovat yhteisiä kaikille autoille. Huoltovälit asetetaan autokohtaisesti asetuksissa.</p>
+    </div><div class="err" id="f-err" hidden></div>
+    <div class="actions"><span></span><span style="display:flex;gap:8px"><button type="button" data-close>Peruuta</button><button type="submit" class="primary">Lisää auto</button></span></div></form>`;
+  ov.hidden=false; ov.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeForm); ov.onclick=e=>{ if(e.target===ov) closeForm(); };
+  setTimeout(()=>$("#c-nimi").focus(),30);
+  $("#sheet").onsubmit=async e=>{ e.preventDefault(); const n=$("#c-nimi").value.trim(); if(!n){ const er=$("#f-err"); er.hidden=false; er.textContent="Anna autolle nimi."; return; }
+    sync(); const car=newCar({auto:n, rekisteri:$("#c-rek").value.trim().toUpperCase(), ominaisuudet:{kulutus:$("#c-f-kulutus").checked, varaosat:$("#c-f-varaosat").checked}});
+    S.cars.push(car); activate(car.id); closeForm(); location.hash="#yleiskuva"; await commit(); toast(`${n} lisätty`); };
+}
+async function downloadBlob(blob, name){
+  if(IN_ARTIFACT){ const dl = S.dl || (window.claude?.use ? await window.claude.use("downloads") : null); S.dl=dl;
+    if(!dl){ toast("Lataus ei ole käytettävissä tässä näkymässä"); return false; }
+    try{ await dl.save({filename:name, data:blob}); return true; }catch(_){ return false; } }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); return true; }
+async function commit(){
+  sync();
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(snapshot())); }catch(_){}
+  if(S.file){ try{ const w=await S.file.createWritable(); await w.write(JSON.stringify(snapshot(),null,1)); await w.close(); S.savedAt=new Date(); S.fileErr=false; }
+    catch(e){ S.fileErr=true; toast("Tiedostoon tallennus ei onnistunut"); } }
+  render();
+}
+/* tiedostokahva muistiin IndexedDB:hen, jotta sama tiedosto avautuu ensi kerralla */
+function idb(op, val){ return new Promise(res=>{ try{ const r=indexedDB.open("huoltokirja",1); r.onupgradeneeded=()=>r.result.createObjectStore("h");
+  r.onsuccess=()=>{ const tx=r.result.transaction("h", op==="get"?"readonly":"readwrite"); const st=tx.objectStore("h"); const q= op==="get"?st.get("file"): op==="del"?st.delete("file"):st.put(val,"file"); q.onsuccess=()=>res(q.result); q.onerror=()=>res(null); };
+  r.onerror=()=>res(null); }catch(_){ res(null); } }); }
+const PICK={types:[{description:"Huoltokirjan tietokanta",accept:{"application/json":[".json"]}}]};
+async function dbNew(){ try{ const h=await window.showSaveFilePicker({...PICK, suggestedName:fileBase()+".json"}); S.file=h; await idb("put",h); await commit(); toast("Tietokanta tallennettu"); }catch(_){} }
+async function dbOpen(){ try{ const [h]=await window.showOpenFilePicker(PICK); const f=await h.getFile(); load(JSON.parse(await f.text())); S.file=h; await idb("put",h); S.pending=null; await commit(); toast("Tietokanta avattu: "+h.name); }
+  catch(e){ if(e?.name!=="AbortError") toast("Tiedosto ei ole huoltokirjan tietokanta"); } }
+async function dbReconnect(){ const h=S.pending; if(!h) return; try{ if(await h.requestPermission({mode:"readwrite"})==="granted"){ const f=await h.getFile(); load(JSON.parse(await f.text())); S.file=h; S.pending=null; await commit(); toast("Yhdistetty: "+h.name); } }catch(_){ toast("Tiedostoa ei löytynyt. Avaa tietokanta uudelleen."); S.pending=null; idb("del"); render(); } }
+async function importFile(file){ try{ load(JSON.parse(await file.text())); await commit(); toast("Tietokanta avattu: "+file.name); }catch(_){ toast("Tiedosto ei ole huoltokirjan tietokanta"); } }
+function renderHeader(){
+  $("#h-plate").textContent = S.settings.rekisteri || "ABC-123";
+  $("#h-name").textContent = S.settings.auto || "Oma auto";
+  document.title = "Huoltokirja " + (S.settings.rekisteri||"");
+  const sel=$("#car-sel"); if(sel){ sel.hidden = S.cars.length<2; sel.innerHTML = S.cars.map(c=>`<option value="${esc(c.id)}" ${c.id===S.active?"selected":""}>${esc((c.id===S.active?S.settings:c.asetukset).auto||"Oma auto")}${(c.id===S.active?S.settings:c.asetukset).rekisteri?" · "+esc((c.id===S.active?S.settings:c.asetukset).rekisteri):""}</option>`).join(""); }
+  const el=$("#dbstatus"); if(!el) return;
+  if(S.pending) el.innerHTML=`<span class="dbs-warn">Tietokanta ${esc(S.pending.name)} odottaa lupaa.</span> <button id="db-reconnect">Jatka tällä tiedostolla</button>`;
+  else if(S.file) el.innerHTML=`<span class="${S.fileErr?"dbs-warn":"dbs-ok"}">● Tallentuu tiedostoon ${esc(S.file.name)}${S.savedAt?" · "+S.savedAt.toLocaleTimeString("fi-FI",{hour:"2-digit",minute:"2-digit"}):""}</span>`;
+  else if(IN_ARTIFACT){ let lb=null; try{ lb=localStorage.getItem(LS_KEY+"-backup"); }catch(_){}
+    const has = S.cars.some(c=>(c.id===S.active?S.tank.length+S.huolto.length+S.osat.length:c.tankkaukset.length+c.huollot.length+c.osat.length)>0);
+    const old = !lb || (Date.now()-new Date(lb))>30*86400000;
+    el.innerHTML = has && old ? `<span class="dbs-warn">● Tiedot ovat vain tässä selaimessa${lb?", varmuuskopio "+new Date(lb).toLocaleDateString("fi-FI"):", varmuuskopiota ei ole otettu"}.</span> <button id="db-dl">Lataa varmuuskopio</button>`
+      : `<span class="dbs-ok">● Tiedot tallentuvat tähän selaimeen${lb?" · varmuuskopio "+new Date(lb).toLocaleDateString("fi-FI"):""}</span>`; }
+  else el.innerHTML=`<span class="dbs-warn">● Vain tämän selaimen muistissa.</span> <a href="#asetukset">Liitä tietokantatiedosto</a>`;
+}
+{ const car=newCar(); S.cars=[car]; activate(car.id); }
+(async()=>{
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw) load(JSON.parse(raw)); }catch(_){}
+  if(FS){ const h=await idb("get"); if(h){ try{ if(await h.queryPermission({mode:"readwrite"})==="granted"){ const f=await h.getFile(); load(JSON.parse(await f.text())); S.file=h; } else S.pending=h; }catch(_){ S.pending=h; } } }
+  render();
+})();
+
+/* ---------- käynnistys ---------- */
+try{ const r=localStorage.getItem("hk-range"); if(["6","12","24"].includes(r)) S.range=r; }catch(_){}
+render();
+/* ---------- tallennus: selaimen muisti + tietokantatiedosto ---------- */
+render();
+})();
+</script>
+</body></html>
