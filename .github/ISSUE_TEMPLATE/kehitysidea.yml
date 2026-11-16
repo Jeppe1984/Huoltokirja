@@ -1,0 +1,49 @@
+name: Kehitysidea
+description: Ehdota uutta ominaisuutta tai parannusta huoltokirjaan
+title: "Idea: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Kiitos ideasta! Kerro lyhyesti, mitä haluaisit huoltokirjan tekevän. Tarkista ensin [muiden ideat](https://github.com/Jeppe1984/Huoltokirja/issues), ettei sama ole jo listalla. Jos on, anna sille 👍.
+  - type: dropdown
+    id: osa
+    attributes:
+      label: Mihin osaan idea liittyy?
+      options:
+        - Tankkaukset ja kulutus
+        - Huollot ja muistutukset
+        - Varaosat
+        - Kulut ja kaaviot
+        - Usea auto
+        - Tietojen tallennus ja siirto
+        - Ulkoasu tai käytettävyys
+        - Muu
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Mitä haluaisit?
+      description: Kuvaa ominaisuus tai muutos omin sanoin.
+      placeholder: "Esim. Huoltomuistutus voisi näkyä myös renkaiden vaihdolle keväällä ja syksyllä."
+    validations:
+      required: true
+  - type: textarea
+    id: miksi
+    attributes:
+      label: Mihin tarvitsisit sitä?
+      description: Millaisessa tilanteessa ominaisuudesta olisi hyötyä? Tämä auttaa tekemään siitä oikeanlaisen.
+    validations:
+      required: false
+  - type: dropdown
+    id: tarve
+    attributes:
+      label: Kuinka tärkeä tämä on sinulle?
+      options:
+        - Kiva lisä
+        - Käyttäisin usein
+        - Ilman tätä en voi käyttää huoltokirjaa
+    validations:
+      required: false

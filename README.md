@@ -2,7 +2,7 @@
 
 Sähköinen huoltokirja autoille ja moottoripyörille. Yksi HTML-tiedosto, joka toimii selaimessa ilman palvelinta, tiliä tai asennusta.
 
-**Käytä selaimessa:** https://jeppe1984.github.io/huoltokirja/
+**Käytä selaimessa:** https://jeppe1984.github.io/Huoltokirja/
 
 ## Mitä sillä tekee
 
@@ -45,6 +45,14 @@ Tietokanta on luettavaa JSON:ia:
   ]
 }
 ```
+
+## Kehitysideat ja palaute
+
+Onko sinulla idea, miten huoltokirjasta saisi paremman? [**Ehdota parannusta**](https://github.com/Jeppe1984/Huoltokirja/issues/new?template=kehitysidea.yml). Katso myös [muiden ideat](https://github.com/Jeppe1984/Huoltokirja/issues) ja anna 👍 niille, joita kannatat. Eniten kannatusta saaneet tehdään ensin.
+
+Jos jokin ei toimi, [ilmoita virheestä](https://github.com/Jeppe1984/Huoltokirja/issues/new?template=virhe.yml). Ilmoitukset ovat julkisia, joten älä liitä niihin omia tietojasi.
+
+Ideoiden ja ilmoitusten jättäminen vaatii ilmaisen GitHub-tilin.
 
 ## Huomioita
 

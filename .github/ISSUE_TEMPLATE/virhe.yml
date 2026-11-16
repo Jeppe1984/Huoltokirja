@@ -1,0 +1,38 @@
+name: Virheilmoitus
+description: Jokin ei toimi niin kuin pitäisi
+title: "Virhe: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Älä liitä ilmoitukseen omia huoltokirjan tietojasi tai .json-tiedostoa, koska ilmoitukset ovat julkisia.
+  - type: textarea
+    id: mita
+    attributes:
+      label: Mitä tapahtui?
+      description: Mitä teit, mitä odotit ja mitä tapahtui sen sijaan?
+    validations:
+      required: true
+  - type: dropdown
+    id: selain
+    attributes:
+      label: Selain
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Muu
+    validations:
+      required: true
+  - type: dropdown
+    id: laite
+    attributes:
+      label: Laite
+      options:
+        - Tietokone
+        - Puhelin
+        - Tabletti
+    validations:
+      required: true
