@@ -10,12 +10,13 @@ Sähköinen huoltokirja autoille ja moottoripyörille. Yksi HTML-tiedosto, joka 
 - **Huollot** – huoltohistoria leimoina, tehdyt toimenpiteet, työn hinta, huoltamo
 - **Varaosat** – ostot, ostopaikat, asennuspäivät ja varastossa odottavat osat
 - **Huoltomuistutukset** – huoltovälit kilometreinä ja kuukausina, katsastuspäivä
+- **Vakuutukset ja verot** – vuosisumma ja erien määrä tai yksittäinen lasku; tulevat eräpäivät näkyvät muistutuksissa ja erääntyneet erät kokonaiskuluissa
 - **Kulut** – kokonaiskulut, kilometrihinta, kuukausikulu ja kuukausittainen kaavio
 - **Monta autoa** – jokaiselle omat kirjaukset, huoltovälit ja seurattavat asiat
 - **Huoltamot** – yhteinen lista nimineen ja yhteystietoineen
 - **CSV-vienti** – tankkaukset, huollot ja varaosat taulukkolaskentaan
 
-Tankkausten ja varaosien seurannan voi kytkeä pois autokohtaisesti, jos niitä ei tarvitse.
+Tankkausten, varaosien sekä vakuutusten ja verojen seurannan voi kytkeä pois autokohtaisesti, jos niitä ei tarvitse.
 
 ## Missä tiedot ovat
 

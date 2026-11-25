@@ -9,7 +9,7 @@ html,body{margin:0}[hidden]{display:none!important}img{max-width:100%}
 /* Layout: kojelauta-tyylinen yläpalkki (mittarilukema + muistutukset), välilehdet, kirjausrivit kuin huoltokirjan leimat */
 :root{
   --bg:#F1F4F6; --surface:#FFFFFF; --ink:#172027; --ink2:#4A5863; --muted:#7A8892; --line:#DCE3E8;
-  --accent:#9A5B00; --accent-fill:#C27A12; --s-fuel:#2F6F9F; --s-parts:#C27A12;
+  --accent:#9A5B00; --accent-fill:#C27A12; --s-fuel:#2F6F9F; --s-parts:#C27A12; --s-fixed:#1BAF7A;
   --ok:#2E7D4F; --ok-bg:#E3F2E8; --warn:#8A5A00; --warn-bg:#FBEFD6; --bad:#B3261E; --bad-bg:#FBE4E2;
   --odo-bg:#172027; --odo-ink:#F3D27A;
   --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
@@ -18,12 +18,12 @@ html,body{margin:0}[hidden]{display:none!important}img{max-width:100%}
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#11161A; --surface:#1A2126; --ink:#E6ECEF; --ink2:#AAB7BF; --muted:#7D8B94; --line:#2B353C;
-  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F;
+  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F; --s-fixed:#199E70;
   --ok:#7CCB98; --ok-bg:#1C3326; --warn:#F0C060; --warn-bg:#3A2E14; --bad:#F2928A; --bad-bg:#3E1E1C;
   --odo-bg:#0A0D10; --odo-ink:#F3D27A; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#11161A; --surface:#1A2126; --ink:#E6ECEF; --ink2:#AAB7BF; --muted:#7D8B94; --line:#2B353C;
-  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F;
+  --accent:#E5A23A; --accent-fill:#C4841F; --s-fuel:#4A8EC2; --s-parts:#C4841F; --s-fixed:#199E70;
   --ok:#7CCB98; --ok-bg:#1C3326; --warn:#F0C060; --warn-bg:#3A2E14; --bad:#F2928A; --bad-bg:#3E1E1C;
   --odo-bg:#0A0D10; --odo-ink:#F3D27A; color-scheme:dark}
 *{box-sizing:border-box}
@@ -134,6 +134,7 @@ textarea{min-height:70px;resize:vertical}
 .field label.toggle{text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink);font-weight:400;margin-bottom:6px}.field label.toggle b{font-weight:700}.toggle{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.toggle input{width:auto;margin-top:3px;accent-color:var(--accent-fill)}.toggle small{display:block;color:var(--ink2);font-weight:400}
 .shop-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) auto;gap:8px;align-items:center;margin-bottom:8px}.shop-row .cnt{grid-column:1/-1;font-size:.8rem;color:var(--muted);margin-top:-4px}
 .foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;font-size:.85rem;color:var(--muted)}.foot-links{display:flex;flex-wrap:wrap;gap:6px 16px}.foot a{color:var(--accent);font-weight:600;text-decoration:none}.foot a:hover{text-decoration:underline}
+.dot-inline{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
 .dbs-ok{color:var(--ok)}.dbs-warn{color:var(--warn)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-weight:600;z-index:30}
 .set-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 80px auto;gap:8px;align-items:center;margin-bottom:8px}
@@ -160,6 +161,7 @@ textarea{min-height:70px;resize:vertical}
     <a href="#tankkaukset" data-tab="tankkaukset">Tankkaukset</a>
     <a href="#huollot" data-tab="huollot">Huollot</a>
     <a href="#varaosat" data-tab="varaosat">Varaosat</a>
+    <a href="#maksut" data-tab="maksut">Maksut</a>
     <a href="#asetukset" data-tab="asetukset">Asetukset</a>
   </nav>
 
@@ -186,11 +188,11 @@ const DEFAULT_CAR = {
   auto:"Oma auto", rekisteri:"", katsastus:"",
   huoltovalit:[{nimi:"Moottoriöljy + suodatin",km:15000,kk:12},{nimi:"Raitisilmasuodatin",km:15000,kk:12},{nimi:"Ilmansuodatin",km:30000,kk:24},{nimi:"Jarruneste",km:null,kk:24}],
   kohteet:["Moottoriöljy + suodatin","Vaihteistoöljy","Ilmansuodatin","Raitisilmasuodatin","Jarruneste","Pyyhkijänsulat","Renkaiden vaihto"],
-  ominaisuudet:{kulutus:true, varaosat:true}
+  ominaisuudet:{kulutus:true, varaosat:true, maksut:true}
 };
 const DEFAULT_SETTINGS = {...DEFAULT_GLOBAL, ...DEFAULT_CAR};
 const clone = o => JSON.parse(JSON.stringify(o));
-const S = { tank:[], huolto:[], osat:[], settings:clone(DEFAULT_SETTINGS), global:clone(DEFAULT_GLOBAL), cars:[], active:null, loaded:{tank:true,huolto:true,osat:true,set:true}, canWrite:true, downloads:true, file:null, savedAt:null, osatFilter:"kaikki", range:"12" };
+const S = { tank:[], huolto:[], osat:[], maksut:[], settings:clone(DEFAULT_SETTINGS), global:clone(DEFAULT_GLOBAL), cars:[], active:null, loaded:{tank:true,huolto:true,osat:true,set:true}, canWrite:true, downloads:true, file:null, savedAt:null, osatFilter:"kaikki", range:"12" };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = (n, d=0) => (n==null||isNaN(n)) ? "–" : Number(n).toLocaleString("fi-FI",{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -209,6 +211,19 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; cle
 const on = f => (S.settings.ominaisuudet||{})[f] !== false;
 const OSAT = () => on("varaosat") ? S.osat : [];
 const TANK = () => on("kulutus") ? S.tank : [];
+const MAKSUT = () => on("maksut") ? S.maksut : [];
+const ERAT = {0:"Kertamaksu",1:"Kerran vuodessa",2:"2 erää vuodessa",3:"3 erää vuodessa",4:"4 erää vuodessa",6:"6 erää vuodessa",12:"Kuukausittain"};
+/* maksun erät eräpäivineen alusta päivään `to` asti */
+function maksuEvents(m, to){
+  const out=[]; if(!m.alku||!(+m.summa)) return out; const n=+m.erat||0;
+  if(!n){ if(m.alku<=to) out.push({pvm:m.alku, summa:+m.summa, era:1, eria:1, m}); return out; }
+  const step=12/n;
+  for(let k=0;k<1200;k++){ const d=addMonths(m.alku, Math.round(k*step)); if(d>to || (m.loppu && d>m.loppu)) break; out.push({pvm:d, summa:+m.summa/n, era:k%n+1, eria:n, m}); }
+  return out;
+}
+function nextEvent(m){ const t=today(); return maksuEvents(m, addDays(t, 800)).find(e=>e.pvm>=t) || null; }
+function prevEvent(m){ const t=today(); return maksuEvents(m, addDays(t,-1)).slice(-1)[0] || null; }
+const paidEvents = () => MAKSUT().flatMap(m=>maksuEvents(m, today()));
 
 /* ---------- laskenta ---------- */
 function fuelRows(){
@@ -248,8 +263,9 @@ function stats(){
   const days = first ? Math.max(1, daysBetween(allDates[0]||first.pvm, today())) : null;
   const driven = (odo && startOdo) ? odo - startOdo : 0;
   const kmPerDay = (first && last && last.pvm!==first.pvm) ? (last.odo-first.odo)/daysBetween(first.pvm,last.pvm) : null;
-  const totalEur = fuelEur + partsEur + laborEur;
-  return { f, first, last, km, litres, avgL: km? litres/km*100 : null, fuelEur, partsEur, laborEur, stock, stockEur, odo, driven, days, kmPerDay,
+  const fixedEur = paidEvents().reduce((s,e)=>s+e.summa,0);
+  const totalEur = fuelEur + partsEur + laborEur + fixedEur;
+  return { f, fixedEur, first, last, km, litres, avgL: km? litres/km*100 : null, fuelEur, partsEur, laborEur, stock, stockEur, odo, driven, days, kmPerDay,
            totalEur, eurKm: driven? (totalEur-stockEur)/driven : null, fuelEurKm: km? tripRows.reduce((s,r)=>s+r.summa,0)/km : null,
            perMonth: days>=30? (totalEur-stockEur)/(days/30.44) : null, lastPrice: lastFuel?.hinta };
 }
@@ -282,16 +298,24 @@ function reminders(st){
     const state = d<0?"bad": d<45?"warn":"ok";
     out.push({nimi:"Katsastus", state, label: state==="bad"?"Myöhässä":state==="warn"?"Pian":"Kunnossa", meta:`Määräpäivä ${dstr(S.settings.katsastus)} · ${d>=0? d+" pv":"-"+(-d)+" pv"}`, pct: Math.min(1, 1-d/365)});
   }
+  MAKSUT().forEach(m=>{
+    const e=nextEvent(m); if(!e) return;
+    const d=daysBetween(today(), e.pvm); const pe=prevEvent(m);
+    const span = pe ? Math.max(1,daysBetween(pe.pvm, e.pvm)) : 365;
+    out.push({nimi:m.nimi, state: d<14?"warn":"ok", label: d===0?"Tänään": d<14?"Pian":`${d} pv`,
+      meta:`${eur(e.summa)} · ${e.eria>1?`erä ${e.era}/${e.eria}`:(+m.erat?"vuosimaksu":"lasku")} · eräpäivä ${dstr(e.pvm)}`, pct: 1-d/span, pay:true});
+  });
   const order={bad:0,warn:1,ok:2,neutral:3};
-  return out.sort((a,b)=>order[a.state]-order[b.state]);
+  return out.sort((a,b)=>order[a.state]-order[b.state] || (a.pay?1:0)-(b.pay?1:0));
 }
 function monthly(st, months){
   const now = new Date(); const keys=[];
   for(let i=months-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }
-  const m = Object.fromEntries(keys.map(k=>[k,{fuel:0,parts:0}]));
+  const m = Object.fromEntries(keys.map(k=>[k,{fuel:0,parts:0,fixed:0}]));
   st.f.forEach(r=>{ const k=r.pvm.slice(0,7); if(m[k]) m[k].fuel+=r.summa; });
   OSAT().forEach(r=>{ const k=(r.hankinta||"").slice(0,7); if(m[k]) m[k].parts+=(+r.hinta||0); });
   S.huolto.forEach(r=>{ const k=(r.pvm||"").slice(0,7); if(m[k]) m[k].parts+=(+r.tyo||0); });
+  paidEvents().forEach(e=>{ const k=e.pvm.slice(0,7); if(m[k]) m[k].fixed+=e.summa; });
   return keys.map(k=>({k, ...m[k]}));
 }
 
@@ -338,19 +362,22 @@ function lineChart(el, rows){
   s.addEventListener("pointerleave", ()=>{tip.hidden=true; xh.setAttribute("visibility","hidden"); hp.setAttribute("visibility","hidden");});
 }
 function barChart(el, data){
+  const SER=[["fuel","--s-fuel","Polttoaine",on("kulutus")],["parts","--s-parts",on("varaosat")?"Osat ja huollot":"Huollot",true],["fixed","--s-fixed","Vakuutukset ja verot",on("maksut")]].filter(x=>x[3]);
+  const tot=d=>SER.reduce((s,[k])=>s+d[k],0);
   const W=640,H=230,L=44,R=10,T=14,B=28;
-  const max = Math.max(10, ...data.map(d=>d.fuel+d.parts));
-  const step = max>400?100: max>150?50:25; const hi=Math.ceil(max/step)*step;
+  const max = Math.max(10, ...data.map(tot));
+  const step = max>1500?500: max>600?200: max>400?100: max>150?50:25; const hi=Math.ceil(max/step)*step;
   const bw=(W-L-R)/data.length, y=v=>T+(hi-v)/hi*(H-T-B), gap=Math.min(10,bw*.3);
   let g='';
   for(let v=0; v<=hi; v+=step) g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
   let bars='';
   data.forEach((d,i)=>{
-    const x0=L+i*bw+gap/2, w=bw-gap; const [yy,mm]=d.k.split("-");
-    const yf=y(d.fuel), yp=y(d.fuel+d.parts);
-    const rr=Math.min(4,w/2);
-    if(d.fuel>0) bars+=`<path d="M${x0},${H-B}V${yf+ (d.parts>0?0:rr)}${d.parts>0?"":`Q${x0},${yf} ${x0+rr},${yf}H${x0+w-rr}Q${x0+w},${yf} ${x0+w},${yf+rr}`}${d.parts>0?`H${x0+w}`:""}V${H-B}Z" fill="var(--s-fuel)"/>`;
-    if(d.parts>0){ const top=yp, bot=yf-(d.fuel>0?2:0); if(bot-top>0.5) bars+=`<path d="M${x0},${bot}V${top+rr}Q${x0},${top} ${x0+rr},${top}H${x0+w-rr}Q${x0+w},${top} ${x0+w},${top+rr}V${bot}Z" fill="var(--s-parts)"/>`; }
+    const x0=L+i*bw+gap/2, w=bw-gap; const [yy,mm]=d.k.split("-"); const rr=Math.min(4,w/2);
+    const segs=SER.filter(([k])=>d[k]>0); let base=0;
+    segs.forEach(([k,c],j)=>{ const bot=y(base)-(j>0?2:0), top=y(base+d[k]); base+=d[k]; if(bot-top<0.5) return;
+      bars += j===segs.length-1
+        ? `<path d="M${x0},${bot}V${Math.min(bot,top+rr)}Q${x0},${top} ${x0+rr},${top}H${x0+w-rr}Q${x0+w},${top} ${x0+w},${Math.min(bot,top+rr)}V${bot}Z" fill="var(${c})"/>`
+        : `<path d="M${x0},${bot}V${top}H${x0+w}V${bot}Z" fill="var(${c})"/>`; });
     bars+=`<text x="${x0+w/2}" y="${H-8}" text-anchor="middle">${MONTHS[+mm-1].slice(0,3)}${+mm===1?" "+yy.slice(2):""}</text>`;
     bars+=`<rect x="${L+i*bw}" y="${T}" width="${bw}" height="${H-T-B}" fill="transparent" data-i="${i}" class="hit"/>`;
   });
@@ -358,8 +385,8 @@ function barChart(el, data){
   const s=el.querySelector("svg"), tip=el.querySelector(".tip");
   s.querySelectorAll(".hit").forEach(h=>{
     const show=()=>{ const d=data[+h.dataset.i]; const [yy,mm]=d.k.split("-"); const r=s.getBoundingClientRect();
-      const cx=(+h.getAttribute("x")+bw/2); tip.innerHTML=`<b>${MONTHS[+mm-1]}kuu ${yy}</b><br>Polttoaine ${eur(d.fuel)}<br>Osat ja huollot ${eur(d.parts)}<br>Yhteensä ${eur(d.fuel+d.parts)}`;
-      tip.style.left=(cx/W*r.width)+"px"; tip.style.top=(y(d.fuel+d.parts)/H*r.height)+"px"; tip.hidden=false; };
+      const cx=(+h.getAttribute("x")+bw/2); tip.innerHTML=`<b>${MONTHS[+mm-1]}kuu ${yy}</b><br>${SER.map(([k,,n])=>`${n} ${eur(d[k])}`).join("<br>")}<br>Yhteensä ${eur(tot(d))}`;
+      tip.style.left=(cx/W*r.width)+"px"; tip.style.top=(y(tot(d))/H*r.height)+"px"; tip.hidden=false; };
     h.addEventListener("pointerenter",show); h.addEventListener("pointerdown",show);
   });
   s.addEventListener("pointerleave",()=>tip.hidden=true);
@@ -371,9 +398,9 @@ function exportBtn(kind){ return S.downloads ? `<button data-export="${kind}">Vi
 
 function viewOverview(){
   const st = stats();
-  if(!TANK().length && !S.huolto.length && !OSAT().length) return `<div class="empty" style="text-align:left;max-width:640px;margin:0 auto">
+  if(!TANK().length && !S.huolto.length && !OSAT().length && !MAKSUT().length) return `<div class="empty" style="text-align:left;max-width:640px;margin:0 auto">
   <h2 style="margin-bottom:8px">Aloita oma huoltokirja</h2>
-  <p>Kirjaa tankkaukset, huollot ja varaosat. Sivu laskee keskikulutuksen, kilometrihinnan ja kuukausikulut ja muistuttaa, kun huolto lähestyy.</p>
+  <p>Kirjaa tankkaukset, huollot, varaosat sekä vakuutukset ja verot. Sivu laskee keskikulutuksen, kilometrihinnan ja kuukausikulut ja muistuttaa, kun huolto tai maksu lähestyy.</p>
   <ol style="padding-left:20px;margin:10px 0 16px"><li>Anna auton nimi ja rekisteritunnus asetuksissa ja valitse, mitä haluat seurata.</li><li>Tarkista huoltovälit oman autosi huolto-ohjelmasta.</li><li>${on("kulutus")?"Kirjaa ensimmäinen tankkaus. Kulutus lasketaan toisesta täydestä tankkauksesta alkaen.":"Kirjaa ensimmäinen huolto."}</li><li>Useammalle autolle saat omat huoltokirjat napista Lisää auto.</li></ol>
   <p class="notice">Tiedot tallentuvat vain omaan selaimeesi, eikä kukaan muu näe niitä.</p>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${on("kulutus")?addBtn("tank","Lisää tankkaus"):""}${S.canWrite?`<button data-add="huolto" class="${on("kulutus")?"":"primary"}">Lisää huolto</button>`:""}<a class="btn" href="#asetukset" style="text-decoration:none">Asetukset</a><label class="btn" for="db-imp2">Avaa varmuuskopio…</label><input id="db-imp2" type="file" accept=".json,application/json" hidden></div></div>`;
@@ -383,20 +410,21 @@ function viewOverview(){
   const tl = [
     ...TANK().map(r=>({pvm:r.pvm, c:"var(--s-fuel)", t:`Tankkaus ${fmt(r.litrat,2)} l ${esc(r.polttoaine||"")}`, v:eur(r.litrat*r.hinta)})),
     ...S.huolto.map(r=>({pvm:r.pvm, c:"var(--ink)", t:`Huolto: ${esc((r.kohteet||[]).join(", ")||r.kuvaus||"")}`, v:r.tyo?eur(r.tyo):""})),
-    ...OSAT().map(r=>({pvm:r.hankinta, c:"var(--s-parts)", t:`Osa: ${esc(r.nimi)}`, v:eur(+r.hinta||0)}))
+    ...OSAT().map(r=>({pvm:r.hankinta, c:"var(--s-parts)", t:`Osa: ${esc(r.nimi)}`, v:eur(+r.hinta||0)})),
+    ...paidEvents().map(e=>({pvm:e.pvm, c:"var(--s-fixed)", t:`${esc(e.m.nimi)}${e.eria>1?` erä ${e.era}/${e.eria}`:""}`, v:eur(e.summa)}))
   ].sort((a,b)=>b.pvm.localeCompare(a.pvm)).slice(0,8);
   return `
-  <div class="toolbar"><div class="left"><h2>Tilanne ${dstr(today())}</h2></div><div class="left">${on("kulutus")?addBtn("tank","+ Tankkaus"):""}${S.canWrite?`<button data-add="huolto" class="${on("kulutus")?"":"primary"}">+ Huolto</button>${on("varaosat")?`<button data-add="osa">+ Varaosa</button>`:""}`:""}</div></div>
+  <div class="toolbar"><div class="left"><h2>Tilanne ${dstr(today())}</h2></div><div class="left">${on("kulutus")?addBtn("tank","+ Tankkaus"):""}${S.canWrite?`<button data-add="huolto" class="${on("kulutus")?"":"primary"}">+ Huolto</button>${on("varaosat")?`<button data-add="osa">+ Varaosa</button>`:""}${on("maksut")?`<button data-add="maksu">+ Maksu</button>`:""}`:""}</div></div>
   <div class="grid kpis">
     ${on("kulutus")?kpi("Keskikulutus", fmt(st.avgL,2), "l/100 km", `${fmt(st.km)} km mitattu tankkauksista`):""}
     ${kpi("Ajettu omistuksessa", fmt(st.driven), "km", st.kmPerDay? `noin ${fmt(st.kmPerDay*30.44)} km kuukaudessa`:"")}
-    ${kpi("Kokonaiskulut", fmt(st.totalEur-st.stockEur,0), "€", [on("kulutus")?`polttoaine ${eur(st.fuelEur,0)}`:"", `${on("varaosat")?"osat ja työ":"huoltotyö"} ${eur(st.partsEur+st.laborEur-st.stockEur,0)}`].filter(Boolean).join(" · "))}
+    ${kpi("Kokonaiskulut", fmt(st.totalEur-st.stockEur,0), "€", [on("kulutus")?`polttoaine ${eur(st.fuelEur,0)}`:"", `${on("varaosat")?"osat ja työ":"huoltotyö"} ${eur(st.partsEur+st.laborEur-st.stockEur,0)}`, on("maksut")?`vakuutukset ja verot ${eur(st.fixedEur,0)}`:""].filter(Boolean).join(" · "))}
     ${kpi("Kilometrihinta", fmt(st.eurKm,3), "€/km", on("kulutus")?`polttoaine yksin ${fmt(st.fuelEurKm,3)} €/km`:"huollot ja osat ajetuille kilometreille")}
     ${kpi("Kuukausikulu", fmt(st.perMonth,0), "€/kk", on("kulutus")?`viimeisin litrahinta ${fmt(st.lastPrice,3)} €`:"omistusajalta laskettuna")}
   </div>
   <section class="grid two">
-    <div class="panel"><div class="panel-h"><h2>Huoltomuistutukset</h2><span class="notice" style="margin:0">Välit muokattavissa asetuksissa</span></div>
-      <div class="rem">${rem.length? rem.map(r=>`<div class="rem-row"><div style="min-width:0"><b>${esc(r.nimi)}</b><div class="meta">${esc(r.meta)}</div></div><span class="chip ${r.state}">${r.label}</span>
+    <div class="panel"><div class="panel-h"><h2>${MAKSUT().length?"Tulevat huollot ja maksut":"Huoltomuistutukset"}</h2><span class="notice" style="margin:0">Välit muokattavissa asetuksissa</span></div>
+      <div class="rem">${rem.length? rem.map(r=>`<div class="rem-row"><div style="min-width:0"><b>${r.pay?`<span class="dot-inline" style="background:var(--s-fixed)"></span>`:""}${esc(r.nimi)}</b><div class="meta">${esc(r.meta)}</div></div><span class="chip ${r.state}">${r.label}</span>
         <div class="bar"><i style="width:${Math.max(2,Math.min(100,r.pct*100))}%;background:var(--${r.state==="bad"?"bad":r.state==="warn"?"warn":r.state==="ok"?"ok":"muted"})"></i></div></div>`).join("") : '<div class="empty">Ei huoltovälejä. Lisää ne asetuksissa.</div>'}</div>
     </div>
     <div class="panel"><div class="panel-h"><h2>Viimeisimmät</h2></div>
@@ -407,7 +435,7 @@ function viewOverview(){
     ${on("kulutus")?`<div class="panel"><div class="panel-h"><h2>Kulutus</h2><span class="legend"><span><i style="background:var(--s-fuel)"></i>l/100 km tankkauksittain</span></span></div><div class="chart" id="c-line"></div></div>`:""}
     <div class="panel"><div class="panel-h"><h2>Kulut kuukausittain</h2>
       <div class="seg" role="group" aria-label="Aikaväli">${["6","12","24"].map(v=>`<button data-range="${v}" aria-pressed="${S.range===v}">${v} kk</button>`).join("")}</div></div>
-      <div class="legend" style="margin-bottom:8px">${on("kulutus")?`<span><i style="background:var(--s-fuel)"></i>Polttoaine</span>`:""}<span><i style="background:var(--s-parts)"></i>${on("varaosat")?"Osat ja huollot":"Huollot"}</span></div>
+      <div class="legend" style="margin-bottom:8px">${on("kulutus")?`<span><i style="background:var(--s-fuel)"></i>Polttoaine</span>`:""}<span><i style="background:var(--s-parts)"></i>${on("varaosat")?"Osat ja huollot":"Huollot"}</span>${on("maksut")?`<span><i style="background:var(--s-fixed)"></i>Vakuutukset ja verot</span>`:""}</div>
       <div class="chart" id="c-bar"></div></div>
   </section>`;
 }
@@ -465,6 +493,7 @@ function viewSettings(){
         <div class="field full"><label for="s-kats">Seuraava katsastus viimeistään</label><input id="s-kats" type="date" value="${esc(s.katsastus||"")}" ${dis}></div>
         <div class="field full"><label>Seurattavat asiat</label>
           <label class="toggle" for="s-f-kulutus"><input type="checkbox" id="s-f-kulutus" ${f.kulutus!==false?"checked":""} ${dis}><span><b>Tankkaukset ja kulutus</b><small>Keskikulutus, polttoainekulut ja kulutuskäyrä</small></span></label>
+          <label class="toggle" for="s-f-maksut"><input type="checkbox" id="s-f-maksut" ${f.maksut!==false?"checked":""} ${dis}><span><b>Vakuutukset ja verot</b><small>Vakuutusmaksut, ajoneuvovero ja muut laskut eräpäivineen</small></span></label>
           <label class="toggle" for="s-f-varaosat"><input type="checkbox" id="s-f-varaosat" ${f.varaosat!==false?"checked":""} ${dis}><span><b>Varaosat ja varasto</b><small>Ostetut osat, ostopaikat ja varastossa odottavat osat</small></span></label>
           <span class="notice">Pois kytkettyjen asioiden kirjaukset säilyvät ja palaavat näkyviin, kun kytket ne takaisin.</span></div>
         <div class="field full"><label for="s-kohteet">Huoltokohteet (valintoina huoltolomakkeella)</label><textarea id="s-kohteet" ${dis}>${esc((s.kohteet||[]).join(", "))}</textarea></div>
@@ -502,10 +531,36 @@ function viewSettings(){
   </section>`;
 }
 
+function viewMaksut(){
+  const st=stats(); const t=today();
+  const rows=[...S.maksut].sort((a,b)=>(a.nimi||"").localeCompare(b.nimi||"","fi"));
+  const active=rows.filter(m=>+m.erat && (!m.loppu||m.loppu>=t));
+  const perYear=active.reduce((s,m)=>s+(+m.summa||0),0);
+  const upcoming=rows.flatMap(m=>maksuEvents(m, addDays(t,365)).filter(e=>e.pvm>=t)).sort((a,b)=>a.pvm.localeCompare(b.pvm));
+  const nx=upcoming[0];
+  return `<div class="toolbar"><div class="left"><h2>Vakuutukset ja verot</h2><span class="chip neutral">${rows.length} kpl</span></div><div class="left">${exportBtn("maksu")}${addBtn("maksu","+ Maksu")}</div></div>
+  <div class="grid kpis" style="margin-bottom:16px">
+    <div class="kpi"><span class="lbl">Vuodessa</span><span class="v num">${fmt(perYear,0)}<small>€</small></span><span class="d">${fmt(perYear/12,0)} € kuukaudessa · toistuvat maksut</span></div>
+    <div class="kpi"><span class="lbl">Maksettu</span><span class="v num">${fmt(st.fixedEur,0)}<small>€</small></span><span class="d">erääntyneet erät tähän päivään asti</span></div>
+    <div class="kpi"><span class="lbl">Seuraava maksu</span><span class="v num">${nx?fmt(nx.summa,2):"–"}<small>${nx?"€":""}</small></span><span class="d">${nx?`${esc(nx.m.nimi)} · ${dstr(nx.pvm)}`:"ei tulevia maksuja"}</span></div>
+  </div>
+  ${rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Maksu</th><th>Tyyppi</th><th>Maksutapa</th><th class="r">Summa</th><th class="r">Erä</th><th>Seuraava eräpäivä</th><th>Voimassa</th></tr></thead><tbody>
+  ${rows.map(m=>{ const e=nextEvent(m); const n=+m.erat||0;
+    return `<tr data-edit="maksu" data-id="${esc(m.id)}"><td>${esc(m.nimi)}</td><td>${esc(m.tyyppi||"")}</td><td>${ERAT[n]||n+" erää"}</td><td class="r">${fmt(+m.summa,2)}${n?" /v":""}</td><td class="r">${fmt(n?m.summa/n:+m.summa,2)}</td>
+    <td>${e?`${dstr(e.pvm)} ${daysBetween(t,e.pvm)<14?'<span class="chip warn">Pian</span>':""}`:'<span class="chip neutral">Ei tulevia</span>'}</td><td>${n?`${dstr(m.alku)} – ${m.loppu?dstr(m.loppu):"toistaiseksi"}`:"kertamaksu"}</td></tr>`;}).join("")}
+  </tbody></table></div>
+  <section><h2 style="margin-bottom:10px">Tulevat 12 kk</h2>
+  ${upcoming.length?`<div class="tbl-wrap"><table><thead><tr><th>Eräpäivä</th><th>Maksu</th><th>Erä</th><th class="r">Summa</th><th class="r">Päiviä</th></tr></thead><tbody>
+  ${upcoming.map(e=>`<tr data-edit="maksu" data-id="${esc(e.m.id)}"><td>${dstr(e.pvm)}</td><td>${esc(e.m.nimi)}</td><td>${e.eria>1?`${e.era}/${e.eria}`:"–"}</td><td class="r">${fmt(e.summa,2)}</td><td class="r">${daysBetween(t,e.pvm)}</td></tr>`).join("")}
+  </tbody><tfoot><tr><td colspan="3">Yhteensä</td><td class="r">${fmt(upcoming.reduce((s,e)=>s+e.summa,0),2)}</td><td></td></tr></tfoot></table></div>`:'<div class="empty">Ei maksuja seuraavan vuoden aikana.</div>'}</section>
+  <p class="notice">Erääntyneet erät lasketaan maksetuiksi ja mukaan kokonaiskuluihin. Kun hinta muuttuu, aseta vanhalle maksulle päättymispäivä ja lisää uusi, niin historia pysyy oikein.</p>`
+  : `<div class="empty">Lisää vakuutukset, ajoneuvovero ja muut laskut. Anna vuoden kokonaissumma ja erien määrä, niin näet tulevat eräpäivät samaan tapaan kuin tulevat huollot.<br><br>${addBtn("maksu","Lisää maksu")}</div>`}`;
+}
+
 let current="yleiskuva";
 function render(){
   const tab = (location.hash||"#yleiskuva").slice(1);
-  const tabs = ["yleiskuva", on("kulutus")&&"tankkaukset", "huollot", on("varaosat")&&"varaosat", "asetukset"].filter(Boolean);
+  const tabs = ["yleiskuva", on("kulutus")&&"tankkaukset", "huollot", on("varaosat")&&"varaosat", on("maksut")&&"maksut", "asetukset"].filter(Boolean);
   current = tabs.includes(tab)?tab:"yleiskuva";
   document.querySelectorAll("nav.tabs a").forEach(a=>a.hidden=!tabs.includes(a.dataset.tab));
   document.querySelectorAll("nav.tabs a").forEach(a=>{ if(a.dataset.tab===current) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
@@ -515,14 +570,14 @@ function render(){
   const v = $("#view");
   renderHeader();
   if(!(S.loaded.tank&&S.loaded.huolto&&S.loaded.osat)){ v.innerHTML='<div class="empty">Ladataan huoltokirjaa…</div>'; return; }
-  v.innerHTML = current==="yleiskuva"?viewOverview(): current==="tankkaukset"?viewTank(): current==="huollot"?viewHuolto(): current==="varaosat"?viewOsat(): viewSettings();
+  v.innerHTML = current==="yleiskuva"?viewOverview(): current==="tankkaukset"?viewTank(): current==="huollot"?viewHuolto(): current==="varaosat"?viewOsat(): current==="maksut"?viewMaksut(): viewSettings();
   if(current==="yleiskuva") afterOverview();
 }
 window.addEventListener("hashchange", render);
 
 /* ---------- lomakkeet ---------- */
-const COL = {tank:"tankkaukset", huolto:"huollot", osa:"osat"};
-function listFor(kind){ return kind==="tank"?S.tank: kind==="huolto"?S.huolto: S.osat; }
+const COL = {tank:"tankkaukset", huolto:"huollot", osa:"osat", maksu:"maksut"};
+function listFor(kind){ return kind==="tank"?S.tank: kind==="huolto"?S.huolto: kind==="maksu"?S.maksut: S.osat; }
 function opts(arr, val){ const a=[...(arr||[])]; if(val && !a.includes(val)) a.unshift(val); return a.map(o=>`<option ${o===val?"selected":""}>${esc(o)}</option>`).join(""); }
 function openForm(kind, id){
   const rec = id ? listFor(kind).find(r=>r.id===id) : null;
@@ -548,11 +603,26 @@ function openForm(kind, id){
       <div class="field"><label for="f-odo">Mittarilukema (km)</label><input id="f-odo" type="number" inputmode="decimal" value="${rec?.odo??""}" placeholder="${odo}" required></div>
       <div class="field full"><label>Tehdyt toimenpiteet</label><div class="checks" id="f-kohteet">${kohteet.map((k,i)=>`<label><input type="checkbox" id="f-k-${i}" value="${esc(k)}" ${(rec?.kohteet||[]).includes(k)?"checked":""}>${esc(k)}</label>`).join("")}</div></div>
       <div class="field full"><label for="f-uusi">Muu toimenpide (pilkulla useampi)</label><input id="f-uusi" placeholder="esim. Sytytystulpat"></div>
-      <div class="field"><label for="f-tekija">Tekijä (Itse tai huoltamo)</label><input id="f-tekija" list="tekijat" value="${esc(rec?.tekija||"Itse")}"><datalist id="tekijat"><option>Itse</option>${(S.settings.huoltamot||[]).map(h=>`<option>${esc(h.nimi)}</option>`).join("")}</datalist></div>
+      <div class="field"><label for="f-tekija">Tekijä</label><select id="f-tekija">${(()=>{ const cur=rec?.tekija||"Itse"; const names=["Itse", ...(S.settings.huoltamot||[]).map(h=>h.nimi).filter(Boolean)]; if(!names.includes(cur)) names.push(cur);
+        return names.map(n=>`<option value="${esc(n)}" ${n===cur?"selected":""}>${esc(n)}</option>`).join("") + `<option value="__uusi">+ Uusi huoltamo…</option>`; })()}</select>
+        <input id="f-tekija-uusi" placeholder="Huoltamon nimi" aria-label="Uuden huoltamon nimi" hidden></div>
       <div class="field"><label for="f-tyo">Työn hinta €</label><input id="f-tyo" type="number" inputmode="decimal" step="0.01" value="${rec?.tyo||""}" placeholder="0"></div>
       <div class="field full"><label for="f-kuvaus">Lyhyt kuvaus</label><input id="f-kuvaus" value="${esc(rec?.kuvaus||"")}" placeholder="esim. Syyshuolto"></div>
       <div class="field full"><label for="f-huom">Muistiinpanot</label><textarea id="f-huom">${esc(rec?.huom||"")}</textarea></div>
       <p class="notice full" style="grid-column:1/-1">Osat, joiden asennuspäivä on sama kuin huollon päivä, liitetään kirjaukseen automaattisesti.</p></div>`;
+  } else if(kind==="maksu"){
+    title = rec?"Maksu":"Uusi maksu";
+    const n = rec ? (+rec.erat||0) : 1;
+    body = `<div class="fgrid">
+      <div class="field full"><label for="f-nimi">Nimi</label><input id="f-nimi" list="maksunimet" value="${esc(rec?.nimi||"")}" placeholder="esim. Liikennevakuutus" required>
+        <datalist id="maksunimet"><option>Liikennevakuutus</option><option>Kaskovakuutus</option><option>Ajoneuvovero</option><option>Käyttövoimavero</option><option>Rengashotelli</option><option>Pysäköinti</option><option>Katsastus</option></datalist></div>
+      <div class="field"><label for="f-tyyppi">Tyyppi</label><select id="f-tyyppi">${opts(["Vakuutus","Vero","Muu"], rec?.tyyppi||"Vakuutus")}</select></div>
+      <div class="field"><label for="f-erat">Maksutapa</label><select id="f-erat">${Object.entries(ERAT).map(([k,v])=>`<option value="${k}" ${+k===n?"selected":""}>${v}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-summa" id="f-summa-l">Summa vuodessa €</label><input id="f-summa" type="number" inputmode="decimal" step="0.01" value="${rec?.summa??""}" required></div>
+      <div class="field"><label for="f-alku" id="f-alku-l">Ensimmäinen eräpäivä</label><input id="f-alku" type="date" value="${esc(rec?.alku||today())}" required></div>
+      <div class="field" id="f-loppu-w"><label for="f-loppu">Päättyy (tyhjä = toistaiseksi)</label><input id="f-loppu" type="date" value="${esc(rec?.loppu||"")}"></div>
+      <div class="field"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}" placeholder="esim. vakuutusyhtiö"></div>
+      <div class="field full calc" id="f-calc"></div></div>`;
   } else {
     title = rec?"Varaosa":"Uusi varaosa";
     body = `<div class="fgrid">
@@ -578,6 +648,16 @@ function openForm(kind, id){
       if(prev && o && l){ const tr=o-prev.odo; t += ` · matka <b>${fmt(tr,1)} km</b> · kulutus <b>${fmt(l/tr*100,2)} l/100 km</b>`; }
       $("#f-calc").innerHTML=t; };
     ["#f-l","#f-h","#f-odo"].forEach(s=>$(s).addEventListener("input",upd)); upd(); }
+  if(kind==="huolto"){ const sel=$("#f-tekija"), nw=$("#f-tekija-uusi"); sel.addEventListener("change",()=>{ nw.hidden = sel.value!=="__uusi"; if(!nw.hidden) nw.focus(); }); }
+  if(kind==="maksu"){ const upd=()=>{ const n=+$("#f-erat").value, sm=+$("#f-summa").value;
+      $("#f-summa-l").textContent = n? "Summa vuodessa €" : "Laskun summa €";
+      $("#f-alku-l").textContent = n? "Ensimmäinen eräpäivä" : "Eräpäivä";
+      $("#f-loppu-w").hidden = !n;
+      const m={erat:n, summa:sm, alku:$("#f-alku").value, loppu:n?($("#f-loppu").value||null):null};
+      const e=sm&&m.alku? nextEvent(m):null;
+      $("#f-calc").innerHTML = !sm ? "Anna summa, niin näet erän suuruuden ja seuraavan eräpäivän." :
+        (n>1? `${n} erää à <b>${eur(sm/n)}</b>` : n? `Kerran vuodessa <b>${eur(sm)}</b>` : `Lasku <b>${eur(sm)}</b>`) + (e? ` · seuraava eräpäivä <b>${dstr(e.pvm)}</b>` : " · ei tulevia eriä"); };
+    ["#f-erat","#f-summa","#f-alku","#f-loppu"].forEach(s=>$(s).addEventListener("input",upd)); $("#f-erat").addEventListener("change",upd); upd(); }
   const del=$("#f-del"); if(del){ del.onclick=async()=>{ if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent="Vahvista poisto"; return; }
       const L=listFor(kind); L.splice(L.findIndex(r=>r.id===rec.id),1); await commit(); toast("Poistettu"); closeForm(); }; }
   $("#sheet").onsubmit = async e=>{ e.preventDefault(); if(ro) return; await save(kind, rec); };
@@ -595,9 +675,15 @@ async function save(kind, rec){
   } else if(kind==="huolto"){
     const k=[...document.querySelectorAll("#f-kohteet input:checked")].map(i=>i.value);
     const extra=$("#f-uusi").value.split(",").map(s=>s.trim()).filter(Boolean);
-    data={pvm:$("#f-pvm").value, odo:num("#f-odo"), kohteet:[...new Set([...k,...extra])], tekija:$("#f-tekija").value.trim()||"Itse", tyo:num("#f-tyo")||0, kuvaus:$("#f-kuvaus").value.trim(), huom:$("#f-huom").value.trim()};
+    data={pvm:$("#f-pvm").value, odo:num("#f-odo"), kohteet:[...new Set([...k,...extra])], tekija:($("#f-tekija").value==="__uusi" ? $("#f-tekija-uusi").value.trim() : $("#f-tekija").value)||"Itse", tyo:num("#f-tyo")||0, kuvaus:$("#f-kuvaus").value.trim(), huom:$("#f-huom").value.trim()};
     if(!data.pvm||!data.odo){ err.hidden=false; err.textContent="Täytä päivä ja mittarilukema."; return; }
+    if($("#f-tekija").value==="__uusi" && !$("#f-tekija-uusi").value.trim()){ err.hidden=false; err.textContent="Kirjoita uuden huoltamon nimi."; return; }
     if(!data.kohteet.length && !data.kuvaus){ err.hidden=false; err.textContent="Valitse vähintään yksi toimenpide tai kirjoita kuvaus."; return; }
+  } else if(kind==="maksu"){
+    const n=+$("#f-erat").value;
+    data={nimi:$("#f-nimi").value.trim(), tyyppi:$("#f-tyyppi").value, erat:n, summa:num("#f-summa"), alku:$("#f-alku").value, loppu:n?($("#f-loppu").value||null):null, huom:$("#f-huom").value.trim()};
+    if(!data.nimi||!data.summa||!data.alku){ err.hidden=false; err.textContent="Täytä nimi, summa ja eräpäivä."; return; }
+    if(data.loppu && data.loppu<data.alku){ err.hidden=false; err.textContent="Päättymispäivä on ennen ensimmäistä eräpäivää."; return; }
   } else {
     data={nimi:$("#f-nimi").value.trim(), luokka:$("#f-luokka").value, kauppa:$("#f-kauppa").value.trim(), hankinta:$("#f-hankinta").value, hinta:num("#f-hinta"), asennus:$("#f-asennus").value||null, odo:num("#f-odo"), huom:$("#f-huom").value.trim()};
     if(!data.nimi||!data.hankinta||data.hinta==null){ err.hidden=false; err.textContent="Täytä osan nimi, hankintapäivä ja hinta."; return; }
@@ -624,6 +710,7 @@ async function exportCsv(kind){
   let head, rows, name;
   if(kind==="tank"){ head=["Päivä","Mittari","Matka","Litrat","€/l","Summa","l/100km","Polttoaine","Huomio"]; rows=fuelRows().map(r=>[r.pvm,r.odo,r.trip??"",r.litrat,r.hinta,r.summa.toFixed(2),r.l100!=null?r.l100.toFixed(2):"",r.polttoaine,r.huom||""]); name="auto_tankkaukset.csv"; }
   else if(kind==="huolto"){ head=["Päivä","Mittari","Toimenpiteet","Tekijä","Työ €","Kuvaus","Muistiinpanot"]; rows=[...S.huolto].sort((a,b)=>a.pvm.localeCompare(b.pvm)).map(h=>[h.pvm,h.odo,(h.kohteet||[]).join(", "),h.tekija||"",h.tyo||0,h.kuvaus||"",h.huom||""]); name="auto_huollot.csv"; }
+  else if(kind==="maksu"){ head=["Eräpäivä","Maksu","Tyyppi","Erä","Summa","Tila"]; const lim=addDays(today(),365); rows=S.maksut.flatMap(m=>maksuEvents(m,lim)).sort((a,b)=>a.pvm.localeCompare(b.pvm)).map(e=>[e.pvm,e.m.nimi,e.m.tyyppi||"",e.eria>1?`${e.era}/${e.eria}`:"",+e.summa.toFixed(2),e.pvm<=today()?"Erääntynyt":"Tuleva"]); name="auto_maksut.csv"; }
   else { head=["Hankittu","Osa","Luokka","Kauppa","Hinta","Asennettu","Mittari","Huomio"]; rows=[...S.osat].sort((a,b)=>(a.hankinta||"").localeCompare(b.hankinta||"")).map(o=>[o.hankinta,o.nimi,o.luokka,o.kauppa,o.hinta,o.asennus||"",o.odo??"",o.huom||""]); name="auto_varaosat.csv"; }
   const q=v=>{ const s=String(v??"").replace(".",kind&&typeof v==="number"?",":"."); return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; };
   const csv="﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n");
@@ -658,7 +745,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#overlay").
 function readShops(){ return (S.settings.huoltamot||[]).map((_,i)=>({nimi:($(`#sh-n-${i}`)?.value||"").trim(), yhteys:($(`#sh-y-${i}`)?.value||"").trim()})); }
 function settingsDraft(){ const split=s=>($(s)?.value||"").split(",").map(x=>x.trim()).filter(Boolean);
   return { auto:$("#s-auto").value.trim()||"Oma auto", rekisteri:$("#s-rek").value.trim().toUpperCase(), katsastus:$("#s-kats").value||"",
-    ominaisuudet:{kulutus:$("#s-f-kulutus").checked, varaosat:$("#s-f-varaosat").checked},
+    ominaisuudet:{kulutus:$("#s-f-kulutus").checked, varaosat:$("#s-f-varaosat").checked, maksut:$("#s-f-maksut").checked},
     huoltamot:readShops().filter(h=>h.nimi), kaupat:split("#s-kaupat"), luokat:split("#s-luokat"), kohteet:split("#s-kohteet"), polttoaineet:split("#s-pa") }; }
 /* lisää/poista-napit renderöivät asetukset uudelleen: pidä muiden kenttien keskeneräiset muutokset */
 function keepSettingsDraft(extra){ const d=settingsDraft(); d.huoltamot=readShops(); S.settings={...S.settings, ...d, huoltovalit:readIntervals(), ...extra}; }
@@ -670,18 +757,18 @@ const FS = !IN_ARTIFACT && typeof window.showSaveFilePicker==="function";
 const LS_KEY="huoltokirja-offline-v1";
 const newId = k => k[0]+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fileBase = () => S.cars.length>1 ? "huoltokirja" : (S.settings.rekisteri||"auto")+"_huoltokirja";
-function newCar(asetukset){ return {id:newId("auto"), asetukset:{...clone(DEFAULT_CAR), ...(asetukset||{})}, tankkaukset:[], huollot:[], osat:[]}; }
+function newCar(asetukset){ return {id:newId("auto"), asetukset:{...clone(DEFAULT_CAR), ...(asetukset||{})}, tankkaukset:[], huollot:[], osat:[], maksut:[]}; }
 const curCar = () => S.cars.find(c=>c.id===S.active);
 function activate(id){
   const car = S.cars.find(c=>c.id===id) || S.cars[0]; S.active=car.id;
-  S.tank=car.tankkaukset; S.huolto=car.huollot; S.osat=car.osat;
+  car.maksut=car.maksut||[]; S.tank=car.tankkaukset; S.huolto=car.huollot; S.osat=car.osat; S.maksut=car.maksut;
   S.settings={...clone(DEFAULT_GLOBAL), ...S.global, ...clone(DEFAULT_CAR), ...car.asetukset};
-  S.settings.ominaisuudet={kulutus:true, varaosat:true, ...(car.asetukset.ominaisuudet||{})};
+  S.settings.ominaisuudet={kulutus:true, varaosat:true, maksut:true, ...(car.asetukset.ominaisuudet||{})};
   S.osatFilter="kaikki";
 }
 function sync(){
   const car=curCar(); if(!car) return;
-  car.tankkaukset=S.tank; car.huollot=S.huolto; car.osat=S.osat;
+  car.tankkaukset=S.tank; car.huollot=S.huolto; car.osat=S.osat; car.maksut=S.maksut;
   const g={}, c={}; Object.entries(S.settings).forEach(([k,v])=> (GLOBAL_KEYS.includes(k)?g:c)[k]=v);
   S.global={...S.global, ...g}; car.asetukset=c;
 }
@@ -695,7 +782,7 @@ function load(o){
     cars=[{id:newId("auto"), asetukset:c, tankkaukset:o.tankkaukset||[], huollot:o.huollot||[], osat:o.osat||[]}];
   } else throw new Error("format");
   if(!cars.length) cars=[newCar()];
-  cars.forEach(car=>{ car.id=car.id||newId("auto"); car.asetukset=car.asetukset||{}; ["tankkaukset","huollot","osat"].forEach((k,i)=>{ car[k]=car[k]||[]; car[k].forEach(r=>{ if(!r.id) r.id=newId("tho"[i]); }); }); });
+  cars.forEach(car=>{ car.id=car.id||newId("auto"); car.asetukset=car.asetukset||{}; ["tankkaukset","huollot","osat","maksut"].forEach((k,i)=>{ car[k]=car[k]||[]; car[k].forEach(r=>{ if(!r.id) r.id=newId("thom"[i]); }); }); });
   // vanhat huoltokirjaukset: kerää huoltamot tekijöistä
   global.huoltamot = global.huoltamot || [];
   cars.forEach(car=>car.huollot.forEach(h=>{ if(h.tekija && h.tekija!=="Itse" && !global.huoltamot.some(x=>x.nimi===h.tekija)) global.huoltamot.push({nimi:h.tekija, yhteys:""}); }));
@@ -717,6 +804,7 @@ function openCarForm(){
       <div class="field full"><label for="c-rek">Rekisteritunnus</label><input id="c-rek" placeholder="ABC-123"></div>
       <div class="field full"><label>Seurattavat asiat</label>
         <label class="toggle" for="c-f-kulutus"><input type="checkbox" id="c-f-kulutus" checked><span><b>Tankkaukset ja kulutus</b><small>Keskikulutus, polttoainekulut ja kulutuskäyrä</small></span></label>
+        <label class="toggle" for="c-f-maksut"><input type="checkbox" id="c-f-maksut" checked><span><b>Vakuutukset ja verot</b><small>Vakuutusmaksut, ajoneuvovero ja muut laskut eräpäivineen</small></span></label>
         <label class="toggle" for="c-f-varaosat"><input type="checkbox" id="c-f-varaosat" checked><span><b>Varaosat ja varasto</b><small>Ostetut osat ja varastossa odottavat osat</small></span></label></div>
       <p class="notice full" style="grid-column:1/-1">Huoltamot, ostopaikat ja osaluokat ovat yhteisiä kaikille autoille. Huoltovälit asetetaan autokohtaisesti asetuksissa.</p>
     </div><div class="err" id="f-err" hidden></div>
@@ -724,7 +812,7 @@ function openCarForm(){
   ov.hidden=false; ov.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeForm); ov.onclick=e=>{ if(e.target===ov) closeForm(); };
   setTimeout(()=>$("#c-nimi").focus(),30);
   $("#sheet").onsubmit=async e=>{ e.preventDefault(); const n=$("#c-nimi").value.trim(); if(!n){ const er=$("#f-err"); er.hidden=false; er.textContent="Anna autolle nimi."; return; }
-    sync(); const car=newCar({auto:n, rekisteri:$("#c-rek").value.trim().toUpperCase(), ominaisuudet:{kulutus:$("#c-f-kulutus").checked, varaosat:$("#c-f-varaosat").checked}});
+    sync(); const car=newCar({auto:n, rekisteri:$("#c-rek").value.trim().toUpperCase(), ominaisuudet:{kulutus:$("#c-f-kulutus").checked, varaosat:$("#c-f-varaosat").checked, maksut:$("#c-f-maksut").checked}});
     S.cars.push(car); activate(car.id); closeForm(); location.hash="#yleiskuva"; await commit(); toast(`${n} lisätty`); };
 }
 async function downloadBlob(blob, name){
