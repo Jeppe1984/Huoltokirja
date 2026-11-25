@@ -29,9 +29,9 @@ Kun pidät `.json`-tiedostoa esimerkiksi OneDrivessa tai Dropboxissa, sama huolt
 
 ## Käyttö ilman verkkoa
 
-Avaa sivu ja tallenna se omalle koneellesi (Ctrl+S, tallennusmuodoksi *Verkkosivu, vain HTML*) tai lataa `index.html` tästä reposta. Avaa tiedosto selaimessa: sivu toimii samoin kuin verkossa.
+Paina sivun alareunasta **Lataa omalle koneelle**, niin saat tiedoston `Huoltokirja.html`. Avaa se selaimessa: sivu toimii samoin kuin verkossa. Selaimen oma tallennus (Ctrl+S) toimii myös, mutta silloin kannattaa valita muoto *Verkkosivu, vain HTML*.
 
-Sivun alareunassa näkyy käytössä oleva versio. Kun ladattu sivu avataan verkkoyhteyden ollessa päällä, se tarkistaa tiedostosta `version.json`, onko uudempi versio saatavilla, ja kertoo siitä sivun yläreunassa. Päivitä tallentamalla uusi versio vanhan tiedoston päälle. Kirjaukset eivät ole sivutiedostossa, joten ne säilyvät. Tarkistuksessa ladataan vain versiotieto, eikä mitään omia tietojasi lähetetä. Fontit ladataan Google Fontsista, ja ilman verkkoyhteyttä selain käyttää omia fonttejaan.
+Sivun alareunassa näkyy käytössä oleva versio. Kun ladattu sivu avataan verkkoyhteyden ollessa päällä, se tarkistaa tiedostosta `version.json`, onko uudempi versio saatavilla, ja kertoo siitä sivun yläreunassa. Ilmoituksen **Lataa uusi versio** -napista saat uuden tiedoston; siirrä se vanhan tilalle. Kirjaukset eivät ole sivutiedostossa, joten ne säilyvät. Tarkistuksessa ladataan vain versiotieto, eikä mitään omia tietojasi lähetetä. Fontit ladataan Google Fontsista, ja ilman verkkoyhteyttä selain käyttää omia fonttejaan.
 
 ## Tietokannan muoto
 
@@ -60,6 +60,7 @@ Ideoiden ja ilmoitusten jättäminen vaatii ilmaisen GitHub-tilin.
 
 ## Versiot
 
+- **1.4.1** (25.11.2026) – Korjaus: välilehtilinkit vievät verkkoon, jos sivu on tallennettu muodossa *Verkkosivu, täydellinen*; Lataa omalle koneelle -linkki
 - **1.4.0** (25.11.2026) – Yhteinen varaosavarasto, määrät ja osittainen käyttö, varastokirjanpito
 - **1.3.0** (25.11.2026) – Versionumero näkyviin ja ilmoitus uudesta versiosta
 - **1.2.0** (25.11.2026) – Vakuutukset ja verot eräpäivineen; huoltamon valinta korjattu

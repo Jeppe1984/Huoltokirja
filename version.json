@@ -1,10 +1,10 @@
 {
-  "versio": "1.4.0",
+  "versio": "1.4.1",
   "pvm": "2026-11-25",
   "muutokset": [
-    "Varaosavarasto on yhteinen kaikille autoille",
-    "Osille määrä ja yksikkö, osittainen käyttö (esim. 3,7 l öljyä 5 litrasta)",
-    "Varastokirjanpito: ostot, käytöt autoittain ja jäljellä oleva arvo",
-    "Vanhat varaosat siirtyvät uuteen malliin automaattisesti"
+    "Korjaus: välilehdet toimivat myös selaimen \"Verkkosivu, täydellinen\" -muodossa tallennetussa sivussa",
+    "Uusi Lataa omalle koneelle -linkki sivun alareunassa",
+    "Päivitysilmoituksesta voi ladata uuden version suoraan",
+    "Yhteinen varaosavarasto ja varastokirjanpito (1.4.0)"
   ]
 }

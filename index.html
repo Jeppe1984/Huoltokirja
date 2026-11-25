@@ -176,7 +176,7 @@ textarea{min-height:70px;resize:vertical}
 
   <main id="view"><div class="empty">Ladataan huoltokirjaa…</div></main>
   <footer class="foot">
-    <span>Huoltokirja <b id="ver" class="num"></b> · tiedot pysyvät omalla laitteellasi · <button type="button" class="linkbtn" id="upd-check">Tarkista päivitykset</button></span>
+    <span>Huoltokirja <b id="ver" class="num"></b> · tiedot pysyvät omalla laitteellasi · <button type="button" class="linkbtn" id="upd-check">Tarkista päivitykset</button> <span id="dl-wrap" hidden>· <button type="button" class="linkbtn" id="dl-page">Lataa omalle koneelle</button></span></span>
     <span class="foot-links"><a href="https://github.com/Jeppe1984/Huoltokirja/issues/new?template=kehitysidea.yml" target="_blank" rel="noopener">Ehdota parannusta</a><a href="https://github.com/Jeppe1984/Huoltokirja/issues/new?template=virhe.yml" target="_blank" rel="noopener">Ilmoita virheestä</a><a href="https://github.com/Jeppe1984/Huoltokirja/issues" target="_blank" rel="noopener">Muiden ideat</a></span>
   </footer>
 </div>
@@ -982,7 +982,7 @@ function renderHeader(){
 })();
 
 /* ---------- versio ja päivitykset ---------- */
-const VERSIO = "1.4.0", VERSIO_PVM = "2026-11-25";
+const VERSIO = "1.4.1", VERSIO_PVM = "2026-11-25";
 const UPDATE_URL = "https://jeppe1984.github.io/Huoltokirja/version.json";
 const HOME_URL = "https://jeppe1984.github.io/Huoltokirja/";
 const newer = (a,b) => { const x=String(a).split(".").map(Number), y=String(b).split(".").map(Number); for(let i=0;i<3;i++){ if((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); } return false; };
@@ -998,13 +998,35 @@ async function checkUpdate(manual){
   const el=$("#update");
   el.innerHTML=`<div class="grow"><b>Uusi versio ${esc(info.versio)} on saatavilla</b> <span class="notice" style="margin:0">Sinulla on ${VERSIO}${info.pvm?` · julkaistu ${dstr(info.pvm)}`:""}</span>
       ${(info.muutokset||[]).length?`<ul>${info.muutokset.slice(0,5).map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`:""}</div>
-    ${onSite?`<button class="primary" type="button" id="upd-reload">Päivitä sivu</button>`:`<a class="btn primary" href="${HOME_URL}" target="_blank" rel="noopener">Avaa uusi versio</a>`}
+    ${onSite?`<button class="primary" type="button" id="upd-reload">Päivitä sivu</button>`:`<button class="primary" type="button" id="upd-dl">Lataa uusi versio</button>`}
     <button type="button" id="upd-hide" aria-label="Piilota ilmoitus">Myöhemmin</button>
-    ${onSite?"":`<p class="notice" style="flex-basis:100%;margin:0">Avaa uusi versio ja tallenna se selaimessa vanhan tiedoston päälle (Ctrl+S, tallennusmuodoksi <i>Verkkosivu, vain HTML</i>). Tietosi pysyvät tallessa, koska ne ovat tietokantatiedostossa tai selaimen muistissa, eivät sivussa itsessään.</p>`}`;
+    ${onSite?"":`<p class="notice" style="flex-basis:100%;margin:0">Uusi versio latautuu tiedostoksi Huoltokirja.html. Siirrä se vanhan tiedoston tilalle. Kirjaukset säilyvät, koska ne ovat tietokantatiedostossa tai selaimen muistissa, eivät sivussa itsessään.</p>`}`;
   el.hidden=false;
   $("#upd-hide").onclick=()=>{ try{ localStorage.setItem("huoltokirja-ohita-versio", info.versio); }catch(_){} el.hidden=true; };
   const rl=$("#upd-reload"); if(rl) rl.onclick=()=>location.reload();
+  const dl=$("#upd-dl"); if(dl) dl.onclick=downloadPage;
 }
+/* Sisäiset linkit: selaimen "Verkkosivu, täydellinen" -tallennus muuttaa #välilehti-linkit
+   verkko-osoitteiksi. Ohjataan kaikki tunnetut välilehtilinkit tämän sivun sisään. */
+const VIEWS=["yleiskuva","tankkaukset","huollot","varaosat","maksut","asetukset"];
+document.addEventListener("click", e=>{
+  const a=e.target.closest("a[href]"); if(!a || a.target==="_blank") return;
+  let u; try{ u=new URL(a.getAttribute("href"), location.href); }catch(_){ return; }
+  const h=u.hash.slice(1);
+  if(VIEWS.includes(h)){ e.preventDefault(); if(location.hash!=="#"+h) location.hash=h; else render(); }
+}, true);
+document.querySelectorAll("nav.tabs a[data-tab]").forEach(a=>a.setAttribute("href","#"+a.dataset.tab));
+/* tallennettu sivu voi sisältää tallennushetken näkymän: piilota vanhat ilmoitukset ja lomakkeet */
+$("#update").hidden=true; $("#overlay").hidden=true; $("#overlay").innerHTML=""; $("#toast").hidden=true;
+/* sivun lataus tiedostoksi: haetaan julkaistu versio ja tallennetaan sellaisenaan */
+async function downloadPage(){
+  try{ const r=await fetch(HOME_URL+"index.html?t="+Date.now(), {cache:"no-store"}); if(!r.ok) throw 0;
+    const html=await r.text(); await downloadBlob(new Blob([html],{type:"text/html"}), "Huoltokirja.html");
+    toast("Ladattu: Huoltokirja.html. Siirrä se haluamaasi kansioon ja avaa selaimella.");
+  }catch(_){ toast("Lataus ei onnistunut. Onko verkkoyhteys päällä?"); }
+}
+if(!IN_ARTIFACT){ $("#dl-wrap").hidden=false; $("#dl-page").addEventListener("click", downloadPage); }
+
 $("#ver").textContent = "v" + VERSIO;
 $("#ver").title = "Julkaistu " + dstr(VERSIO_PVM);
 $("#upd-check").addEventListener("click", ()=>checkUpdate(true));
