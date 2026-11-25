@@ -15,4 +15,9 @@ Ladatut kopiot vertaavat omaa `VERSIO`-arvoaan `version.json`-tiedostoon, joten 
 
 ## Tietomalli
 
-Tietokanta (localStorage tai käyttäjän .json-tiedosto) on versiota 2: `yhteiset` (huoltamot, kaupat, luokat, polttoaineet) ja `autot[]`, joilla jokaisella `asetukset`, `tankkaukset`, `huollot`, `osat`, `maksut`. `load()` muuntaa vanhan version 1 (yksi auto) automaattisesti. Älä riko vanhojen tiedostojen avaamista.
+Tietokanta (localStorage tai käyttäjän .json-tiedosto) on versiota 3:
+- `yhteiset`: huoltamot, kaupat, luokat, polttoaineet
+- `varasto[]`: varaosaostot, yhteisiä kaikille autoille: `nimi, luokka, kauppa, hankinta, hinta` (koko oston hinta), `maara, yksikko`, `auto` (varattu autolle tai `null` = yhteinen)
+- `autot[]`: jokaisella `asetukset, tankkaukset, huollot, maksut` ja `osat` = varaston käytöt `{varastoId, maara, asennus, odo}`. Käytön kulu = `hinta * maara / oston maara`; jäljellä = oston määrä − kaikkien autojen käytöt.
+
+`load()` muuntaa vanhat versiot automaattisesti (v1 yksi auto → v2 monta autoa → v3 auton osat ostoiksi ja käytöiksi). Älä riko vanhojen tiedostojen avaamista.

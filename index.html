@@ -201,7 +201,7 @@ const DEFAULT_CAR = {
 };
 const DEFAULT_SETTINGS = {...DEFAULT_GLOBAL, ...DEFAULT_CAR};
 const clone = o => JSON.parse(JSON.stringify(o));
-const S = { tank:[], huolto:[], osat:[], maksut:[], settings:clone(DEFAULT_SETTINGS), global:clone(DEFAULT_GLOBAL), cars:[], active:null, loaded:{tank:true,huolto:true,osat:true,set:true}, canWrite:true, downloads:true, file:null, savedAt:null, osatFilter:"kaikki", range:"12" };
+const S = { tank:[], huolto:[], osat:[], maksut:[], varasto:[], settings:clone(DEFAULT_SETTINGS), global:clone(DEFAULT_GLOBAL), cars:[], active:null, loaded:{tank:true,huolto:true,osat:true,set:true}, canWrite:true, downloads:true, file:null, savedAt:null, osatFilter:"varasto", range:"12" };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = (n, d=0) => (n==null||isNaN(n)) ? "–" : Number(n).toLocaleString("fi-FI",{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -218,7 +218,20 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; cle
 
 /* ---------- ominaisuudet ---------- */
 const on = f => (S.settings.ominaisuudet||{})[f] !== false;
-const OSAT = () => on("varaosat") ? S.osat : [];
+/* varasto: ostot ovat yhteisiä (S.varasto), käytöt kuuluvat autolle (car.osat) */
+const YKSIKOT = ["kpl","l","ml","kg","g","m","pari","sarja","pkt"];
+const fq = n => Number(n||0).toLocaleString("fi-FI",{maximumFractionDigits:2});
+const ostoById = id => S.varasto.find(v=>v.id===id);
+const carOsat = c => c.id===S.active ? S.osat : (c.osat||[]);
+const carLabel = c => { const a = c.id===S.active ? S.settings : (c.asetukset||{}); return (a.auto||"Oma auto") + (a.rekisteri?" · "+a.rekisteri:""); };
+const carShort = id => { const c=S.cars.find(x=>x.id===id); if(!c) return "–"; const a=c.id===S.active?S.settings:(c.asetukset||{}); return a.auto||"Oma auto"; };
+function kaytot(ostoId){ return S.cars.flatMap(c=>carOsat(c).filter(u=>u.varastoId===ostoId).map(u=>({...u, autoId:c.id}))); }
+const kaytetty = (ostoId, ilman) => kaytot(ostoId).filter(u=>u.id!==ilman).reduce((s,u)=>s+(+u.maara||0),0);
+const jaljella = (o, ilman) => Math.max(0, (+o.maara||0) - kaytetty(o.id, ilman));
+const yksHinta = o => (+o.maara ? (+o.hinta||0)/(+o.maara) : 0);
+const kayttoKulu = u => { const o=ostoById(u.varastoId); return o ? yksHinta(o)*(+u.maara||0) : 0; };
+/* auton käytöt rikastettuna ostotiedoilla: nimi, kauppa ja kulu */
+const OSAT = () => on("varaosat") ? S.osat.map(u=>{ const o=ostoById(u.varastoId)||{}; return {...u, nimi:o.nimi||"(poistettu osto)", luokka:o.luokka, kauppa:o.kauppa, hankinta:o.hankinta, yksikko:o.yksikko||"kpl", hinta:kayttoKulu(u)}; }) : [];
 const TANK = () => on("kulutus") ? S.tank : [];
 const MAKSUT = () => on("maksut") ? S.maksut : [];
 const ERAT = {0:"Kertamaksu",1:"Kerran vuodessa",2:"2 erää vuodessa",3:"3 erää vuodessa",4:"4 erää vuodessa",6:"6 erää vuodessa",12:"Kuukausittain"};
@@ -256,7 +269,7 @@ function latestOdo(){
 function stats(){
   const f = fuelRows();
   const recs = [...TANK().map(r=>({pvm:r.pvm,odo:r.odo})), ...S.huolto.map(r=>({pvm:r.pvm,odo:r.odo})), ...OSAT().filter(r=>r.odo&&r.asennus).map(r=>({pvm:r.asennus,odo:r.odo}))].filter(r=>r.pvm&&r.odo).sort((a,b)=>a.pvm.localeCompare(b.pvm)||a.odo-b.odo);
-  const allDates = [...TANK().map(r=>r.pvm), ...S.huolto.map(r=>r.pvm), ...OSAT().map(r=>r.hankinta)].filter(Boolean).sort();
+  const allDates = [...TANK().map(r=>r.pvm), ...S.huolto.map(r=>r.pvm), ...OSAT().map(r=>r.asennus)].filter(Boolean).sort();
   const first = recs[0] || (allDates[0]?{pvm:allDates[0],odo:null}:null), last = recs[recs.length-1];
   const lastFuel = f[f.length-1];
   const tripRows = f.filter(r=>r.trip>0);
@@ -322,7 +335,7 @@ function monthly(st, months){
   for(let i=months-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }
   const m = Object.fromEntries(keys.map(k=>[k,{fuel:0,parts:0,fixed:0}]));
   st.f.forEach(r=>{ const k=r.pvm.slice(0,7); if(m[k]) m[k].fuel+=r.summa; });
-  OSAT().forEach(r=>{ const k=(r.hankinta||"").slice(0,7); if(m[k]) m[k].parts+=(+r.hinta||0); });
+  OSAT().forEach(r=>{ const k=(r.asennus||"").slice(0,7); if(m[k]) m[k].parts+=(+r.hinta||0); });
   S.huolto.forEach(r=>{ const k=(r.pvm||"").slice(0,7); if(m[k]) m[k].parts+=(+r.tyo||0); });
   paidEvents().forEach(e=>{ const k=e.pvm.slice(0,7); if(m[k]) m[k].fixed+=e.summa; });
   return keys.map(k=>({k, ...m[k]}));
@@ -419,7 +432,7 @@ function viewOverview(){
   const tl = [
     ...TANK().map(r=>({pvm:r.pvm, c:"var(--s-fuel)", t:`Tankkaus ${fmt(r.litrat,2)} l ${esc(r.polttoaine||"")}`, v:eur(r.litrat*r.hinta)})),
     ...S.huolto.map(r=>({pvm:r.pvm, c:"var(--ink)", t:`Huolto: ${esc((r.kohteet||[]).join(", ")||r.kuvaus||"")}`, v:r.tyo?eur(r.tyo):""})),
-    ...OSAT().map(r=>({pvm:r.hankinta, c:"var(--s-parts)", t:`Osa: ${esc(r.nimi)}`, v:eur(+r.hinta||0)})),
+    ...OSAT().map(r=>({pvm:r.asennus, c:"var(--s-parts)", t:`Osa: ${esc(r.nimi)}${r.yksikko!=="kpl"||+r.maara!==1?` ${fq(r.maara)} ${esc(r.yksikko)}`:""}`, v:eur(+r.hinta||0)})),
     ...paidEvents().map(e=>({pvm:e.pvm, c:"var(--s-fixed)", t:`${esc(e.m.nimi)}${e.eria>1?` erä ${e.era}/${e.eria}`:""}`, v:eur(e.summa)}))
   ].sort((a,b)=>b.pvm.localeCompare(a.pvm)).slice(0,8);
   return `
@@ -475,20 +488,45 @@ function viewHuolto(){
     </article>`;}).join("")}</div>` : '<div class="empty">Ei huoltoja vielä.</div>'}`;
 }
 function viewOsat(){
-  const st=stats();
-  let rows=[...S.osat].sort((a,b)=>(b.hankinta||"").localeCompare(a.hankinta||""));
-  if(S.osatFilter==="varasto") rows=rows.filter(r=>!r.asennus); else if(S.osatFilter==="asennettu") rows=rows.filter(r=>r.asennus);
-  const f=[["kaikki","Kaikki"],["varasto","Varastossa"],["asennettu","Asennettu"]];
-  return `<div class="toolbar"><div class="left"><h2>Varaosat</h2><div class="seg" role="group" aria-label="Suodatin">${f.map(([k,l])=>`<button data-of="${k}" aria-pressed="${S.osatFilter===k}">${l}</button>`).join("")}</div></div><div class="left">${exportBtn("osat")}${addBtn("osa","+ Varaosa")}</div></div>
+  const t=today();
+  const items=S.varasto.map(o=>({o, left:jaljella(o)}));
+  const stockItems=items.filter(x=>x.left>1e-9);
+  const stockVal=stockItems.reduce((s,x)=>s+x.left*yksHinta(x.o),0);
+  const mine=OSAT();
+  const carCost=mine.reduce((s,u)=>s+u.hinta,0);
+  const f=[["varasto","Varasto"],["asennetut","Asennetut tähän autoon"],["ostot","Ostohistoria"]];
+  const kohde=o=> !o.auto ? '<span class="chip neutral">Yhteinen</span>' : o.auto===S.active ? `<span class="chip ok">${esc(carShort(o.auto))}</span>` : `<span class="chip warn">${esc(carShort(o.auto))}</span>`;
+  const rank=o=> o.auto===S.active?0: !o.auto?1:2;
+  let table="";
+  if(S.osatFilter==="asennetut"){
+    const rows=[...mine].sort((a,b)=>(b.asennus||"").localeCompare(a.asennus||""));
+    table = rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Asennettu</th><th>Osa</th><th class="r">Määrä</th><th class="r">Kulu</th><th class="r">Mittari</th><th>Kauppa</th></tr></thead><tbody>
+      ${rows.map(u=>`<tr data-edit="kaytto" data-id="${esc(u.id)}"><td>${dstr(u.asennus)}</td><td class="wrapcell">${esc(u.nimi)}</td><td class="r">${fq(u.maara)} ${esc(u.yksikko)}</td><td class="r">${fmt(u.hinta,2)}</td><td class="r">${u.odo?fmt(u.odo):"–"}</td><td>${esc(u.kauppa||"")}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td colspan="3">Yhteensä</td><td class="r">${fmt(carCost,2)}</td><td colspan="2"></td></tr></tfoot></table></div>`
+      : '<div class="empty">Tähän autoon ei ole vielä asennettu osia. Valitse Varasto-näkymästä osa ja paina Käytä.</div>';
+  } else if(S.osatFilter==="ostot"){
+    const rows=[...items].sort((a,b)=>(b.o.hankinta||"").localeCompare(a.o.hankinta||""));
+    table = rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Ostettu</th><th>Osa</th><th>Kauppa</th><th class="r">Määrä</th><th class="r">Hinta</th><th>Käytetty</th><th class="r">Jäljellä</th></tr></thead><tbody>
+      ${rows.map(({o,left})=>{ const us=kaytot(o.id); return `<tr data-edit="osa" data-id="${esc(o.id)}"><td>${dstr(o.hankinta)}</td><td class="wrapcell">${esc(o.nimi)}</td><td>${esc(o.kauppa||"")}</td><td class="r">${fq(o.maara)} ${esc(o.yksikko||"kpl")}</td><td class="r">${fmt(+o.hinta,2)}</td>
+        <td class="wrapcell">${us.length?us.map(u=>`${esc(carShort(u.autoId))} ${fq(u.maara)} ${esc(o.yksikko||"kpl")}`).join(", "):"–"}</td><td class="r">${left>1e-9?`${fq(left)} ${esc(o.yksikko||"kpl")}`:"–"}</td></tr>`; }).join("")}
+      </tbody><tfoot><tr><td colspan="4">Ostettu yhteensä</td><td class="r">${fmt(items.reduce((s,x)=>s+(+x.o.hinta||0),0),2)}</td><td colspan="2"></td></tr></tfoot></table></div>`
+      : '<div class="empty">Ei ostoja vielä.</div>';
+  } else {
+    const rows=[...stockItems].sort((a,b)=>rank(a.o)-rank(b.o) || (a.o.nimi||"").localeCompare(b.o.nimi||"","fi"));
+    table = rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Osa</th><th>Kenelle</th><th class="r">Jäljellä</th><th class="r">Arvo</th><th>Ostettu</th><th>Kauppa</th><th></th></tr></thead><tbody>
+      ${rows.map(({o,left})=>`<tr data-edit="osa" data-id="${esc(o.id)}"><td class="wrapcell">${esc(o.nimi)}</td><td>${kohde(o)}</td><td class="r">${fq(left)} ${esc(o.yksikko||"kpl")}${left<(+o.maara)-1e-9?` <span class="notice" style="margin:0">/ ${fq(o.maara)}</span>`:""}</td><td class="r">${fmt(left*yksHinta(o),2)}</td><td>${dstr(o.hankinta)} · ${fmt(daysBetween(o.hankinta,t))} pv</td><td>${esc(o.kauppa||"")}</td>
+        <td>${S.canWrite?`<button type="button" data-use="${esc(o.id)}">Käytä</button>`:""}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td colspan="3">Varaston arvo</td><td class="r">${fmt(stockVal,2)}</td><td colspan="3"></td></tr></tfoot></table></div>
+      <p class="notice">Varasto on yhteinen kaikille autoillesi. Yhteiset osat ja tälle autolle varatut näkyvät ensin. Kun käytät osan, sen kulu siirtyy sille autolle, johon se asennetaan. Osittain käytetystä osasta jää varastoon loput omalla arvollaan.</p>`
+      : '<div class="empty">Varasto on tyhjä. Kirjaa ostamasi osat napista + Varaosa. Osa voi olla yhteinen, esimerkiksi öljy tai pesuneste, tai varattu tietylle autolle.</div>';
+  }
+  return `<div class="toolbar"><div class="left"><h2>Varaosat</h2><div class="seg" role="group" aria-label="Näkymä">${f.map(([k,l])=>`<button data-of="${k}" aria-pressed="${S.osatFilter===k}">${l}</button>`).join("")}</div></div><div class="left">${exportBtn("osat")}${addBtn("osa","+ Varaosa")}</div></div>
   <div class="grid kpis" style="margin-bottom:16px">
-    <div class="kpi"><span class="lbl">Osat yhteensä</span><span class="v num">${fmt(st.partsEur,2)}<small>€</small></span><span class="d">${S.osat.length} hankintaa</span></div>
-    <div class="kpi"><span class="lbl">Varastossa</span><span class="v num">${fmt(st.stockEur,2)}<small>€</small></span><span class="d">${st.stock.length} osaa asentamatta</span></div>
+    <div class="kpi"><span class="lbl">Varaston arvo</span><span class="v num">${fmt(stockVal,2)}<small>€</small></span><span class="d">${stockItems.length} nimikettä, kaikki autot</span></div>
+    <div class="kpi"><span class="lbl">Tämän auton osat</span><span class="v num">${fmt(carCost,2)}<small>€</small></span><span class="d">${mine.length} asennusta</span></div>
+    <div class="kpi"><span class="lbl">Ostettu yhteensä</span><span class="v num">${fmt(items.reduce((s,x)=>s+(+x.o.hinta||0),0),2)}<small>€</small></span><span class="d">${items.length} ostoa</span></div>
   </div>
-  ${rows.length? `<div class="tbl-wrap"><table><thead><tr><th>Hankittu</th><th>Osa</th><th>Luokka</th><th>Kauppa</th><th class="r">Hinta</th><th>Tila</th><th class="r">Varastossa</th></tr></thead><tbody>
-  ${rows.map(r=>{const days=r.asennus? daysBetween(r.hankinta,r.asennus) : daysBetween(r.hankinta,today());
-    return `<tr data-edit="osa" data-id="${esc(r.id)}"><td>${dstr(r.hankinta)}</td><td class="wrapcell">${esc(r.nimi)}</td><td>${esc(r.luokka)}</td><td>${esc(r.kauppa)}</td><td class="r">${fmt(+r.hinta,2)}</td>
-    <td>${r.asennus?`<span class="chip ok">Asennettu ${dstr(r.asennus)}</span>`:'<span class="chip warn">Varastossa</span>'}</td><td class="r">${fmt(days)} pv</td></tr>`;}).join("")}
-  </tbody></table></div>` : '<div class="empty">Ei osia tällä rajauksella.</div>'}`;
+  ${table}`;
 }
 function viewSettings(){
   const s=S.settings; const dis=S.canWrite?"":"disabled"; const f=s.ominaisuudet||{};
@@ -586,9 +624,9 @@ window.addEventListener("hashchange", render);
 
 /* ---------- lomakkeet ---------- */
 const COL = {tank:"tankkaukset", huolto:"huollot", osa:"osat", maksu:"maksut"};
-function listFor(kind){ return kind==="tank"?S.tank: kind==="huolto"?S.huolto: kind==="maksu"?S.maksut: S.osat; }
+function listFor(kind){ return kind==="tank"?S.tank: kind==="huolto"?S.huolto: kind==="maksu"?S.maksut: kind==="kaytto"?S.osat: S.varasto; }
 function opts(arr, val){ const a=[...(arr||[])]; if(val && !a.includes(val)) a.unshift(val); return a.map(o=>`<option ${o===val?"selected":""}>${esc(o)}</option>`).join(""); }
-function openForm(kind, id){
+function openForm(kind, id, extra){
   const rec = id ? listFor(kind).find(r=>r.id===id) : null;
   const ov=$("#overlay"); const ro = !S.canWrite;
   const odo = latestOdo()||"";
@@ -632,17 +670,45 @@ function openForm(kind, id){
       <div class="field" id="f-loppu-w"><label for="f-loppu">Päättyy (tyhjä = toistaiseksi)</label><input id="f-loppu" type="date" value="${esc(rec?.loppu||"")}"></div>
       <div class="field"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}" placeholder="esim. vakuutusyhtiö"></div>
       <div class="field full calc" id="f-calc"></div></div>`;
-  } else {
-    title = rec?"Varaosa":"Uusi varaosa";
+  } else if(kind==="osa"){
+    title = rec?"Varaosan osto":"Uusi varaosa";
+    const us = rec ? kaytot(rec.id) : [];
+    const carOpts = (sel)=>`<option value="">Yhteinen varasto</option>`+S.cars.map(c=>`<option value="${esc(c.id)}" ${c.id===sel?"selected":""}>${esc(carLabel(c))}</option>`).join("");
     body = `<div class="fgrid">
-      <div class="field full"><label for="f-nimi">Osa</label><input id="f-nimi" value="${esc(rec?.nimi||"")}" placeholder="esim. Öljynsuodatin BOSCH F 026 407 092" required></div>
+      <div class="field full"><label for="f-nimi">Osa</label><input id="f-nimi" value="${esc(rec?.nimi||"")}" placeholder="esim. Moottoriöljy 0W-20 tai Öljynsuodatin BOSCH F 026 407 092" required></div>
       <div class="field"><label for="f-luokka">Luokka</label><select id="f-luokka">${opts(S.settings.luokat, rec?.luokka||"")}</select></div>
       <div class="field"><label for="f-kauppa">Kauppa</label><input id="f-kauppa" list="kaupat" value="${esc(rec?.kauppa||"")}"><datalist id="kaupat">${(S.settings.kaupat||[]).map(k=>`<option>${esc(k)}</option>`).join("")}</datalist></div>
-      <div class="field"><label for="f-hankinta">Hankittu</label><input id="f-hankinta" type="date" value="${esc(rec?.hankinta||today())}" required></div>
-      <div class="field"><label for="f-hinta">Hinta €</label><input id="f-hinta" type="number" inputmode="decimal" step="0.01" value="${rec?.hinta??""}" required></div>
-      <div class="field"><label for="f-asennus">Asennettu (tyhjä = varastossa)</label><input id="f-asennus" type="date" value="${esc(rec?.asennus||"")}"></div>
-      <div class="field"><label for="f-odo">Mittari asennettaessa</label><input id="f-odo" type="number" inputmode="decimal" value="${rec?.odo??""}"></div>
-      <div class="field full"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}"></div></div>`;
+      <div class="field"><label for="f-maara">Määrä</label><input id="f-maara" type="number" inputmode="decimal" step="0.01" min="0" value="${rec?.maara??1}" required></div>
+      <div class="field"><label for="f-yks">Yksikkö</label><select id="f-yks">${opts(YKSIKOT, rec?.yksikko||"kpl")}</select></div>
+      <div class="field"><label for="f-hinta">Hinta yhteensä €</label><input id="f-hinta" type="number" inputmode="decimal" step="0.01" value="${rec?.hinta??""}" required></div>
+      <div class="field"><label for="f-hankinta">Ostettu</label><input id="f-hankinta" type="date" value="${esc(rec?.hankinta||today())}" required></div>
+      <div class="field full"><label for="f-auto">Kenelle</label><select id="f-auto">${carOpts(rec ? (rec.auto||"") : S.active)}</select></div>
+      ${rec?"":`<label class="toggle field full" for="f-heti" style="grid-column:1/-1"><input type="checkbox" id="f-heti"><span><b>Asennettu heti</b><small>Koko määrä käytetään valittuun autoon (yhteisestä varastosta tähän autoon)</small></span></label>
+      <div class="field" id="f-heti-pvm-w" hidden><label for="f-asennus">Asennuspäivä</label><input id="f-asennus" type="date" value="${today()}"></div>
+      <div class="field" id="f-heti-odo-w" hidden><label for="f-odo">Mittari asennettaessa</label><input id="f-odo" type="number" inputmode="decimal" placeholder="${odo}"></div>`}
+      <div class="field full"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}"></div>
+      <div class="field full calc" id="f-calc"></div>
+      ${rec?`<div class="field full"><label>Varastokirjanpito</label><div class="calc">
+        <div>${dstr(rec.hankinta)} · osto ${fq(rec.maara)} ${esc(rec.yksikko||"kpl")} · ${eur(+rec.hinta)}</div>
+        ${us.sort((a,b)=>(a.asennus||"").localeCompare(b.asennus||"")).map(u=>`<div>${dstr(u.asennus)} · ${esc(carShort(u.autoId))} −${fq(u.maara)} ${esc(rec.yksikko||"kpl")} · ${eur(kayttoKulu(u))}</div>`).join("")}
+        <div><b>Jäljellä ${fq(jaljella(rec))} ${esc(rec.yksikko||"kpl")} · ${eur(jaljella(rec)*yksHinta(rec))}</b></div></div>
+        ${jaljella(rec)>1e-9 && !ro?`<button type="button" id="f-use" style="margin-top:8px">Käytä autoon…</button>`:""}</div>`:""}
+      </div>`;
+  } else if(kind==="kaytto"){
+    const o = ostoById(rec ? rec.varastoId : extra?.osto);
+    if(!o){ toast("Ostoa ei löytynyt"); return; }
+    title = rec?"Osan käyttö":"Käytä varastosta";
+    const left = jaljella(o, rec?.id);
+    const def = rec ? rec.maara : left;
+    body = `<div class="fgrid">
+      <div class="field full calc"><b>${esc(o.nimi)}</b><br>Varastossa ${fq(left)} ${esc(o.yksikko||"kpl")} · ${fmt(yksHinta(o),2)} €/${esc(o.yksikko||"kpl")}</div>
+      <div class="field full"><label for="f-auto">Auto</label><select id="f-auto">${S.cars.map(c=>`<option value="${esc(c.id)}" ${c.id===(rec?S.active:(o.auto||S.active))?"selected":""}>${esc(carLabel(c))}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-maara">Käytetty määrä (${esc(o.yksikko||"kpl")})</label><input id="f-maara" type="number" inputmode="decimal" step="0.01" min="0" value="${def}" required></div>
+      <div class="field"><label for="f-asennus">Asennuspäivä</label><input id="f-asennus" type="date" value="${esc(rec?.asennus||today())}" required></div>
+      <div class="field"><label for="f-odo">Mittari asennettaessa</label><input id="f-odo" type="number" inputmode="decimal" value="${rec?.odo??""}" placeholder="${odo}"></div>
+      <div class="field"><label for="f-huom">Huomio</label><input id="f-huom" value="${esc(rec?.huom||"")}"></div>
+      <div class="field full calc" id="f-calc"></div>
+      <input type="hidden" id="f-osto" value="${esc(o.id)}"></div>`;
   }
   ov.innerHTML = `<form class="sheet" id="sheet" novalidate>
     <h2>${title}<button type="button" data-close aria-label="Sulje">✕</button></h2>${body}<div class="err" id="f-err" hidden></div>
@@ -657,6 +723,16 @@ function openForm(kind, id){
       if(prev && o && l){ const tr=o-prev.odo; t += ` · matka <b>${fmt(tr,1)} km</b> · kulutus <b>${fmt(l/tr*100,2)} l/100 km</b>`; }
       $("#f-calc").innerHTML=t; };
     ["#f-l","#f-h","#f-odo"].forEach(s=>$(s).addEventListener("input",upd)); upd(); }
+  if(kind==="osa"){ const upd=()=>{ const q=+$("#f-maara").value, h=+$("#f-hinta").value, y=$("#f-yks").value;
+      $("#f-calc").innerHTML = q>0&&h ? `${fmt(h/q,2)} €/${esc(y)}` + (rec? ` · käytetty ${fq(kaytetty(rec.id))} ${esc(y)}`:"") : "Anna määrä ja hinta, niin näet yksikköhinnan.";
+      const hb=$("#f-heti"); if(hb){ $("#f-heti-pvm-w").hidden=!hb.checked; $("#f-heti-odo-w").hidden=!hb.checked; } };
+    ["#f-maara","#f-hinta","#f-yks","#f-heti"].forEach(x=>{ const e=$(x); if(e){ e.addEventListener("input",upd); e.addEventListener("change",upd);} }); upd();
+    const ub=$("#f-use"); if(ub) ub.onclick=()=>{ closeForm(); openForm("kaytto", null, {osto:rec.id}); }; }
+  if(kind==="kaytto"){ const o=ostoById($("#f-osto").value); const left=jaljella(o, rec?.id);
+    const upd=()=>{ const q=+$("#f-maara").value; const rest=left-q;
+      $("#f-calc").innerHTML = !(q>0) ? "Anna käytetty määrä." : rest<-1e-9 ? `<span class="err">Varastossa on vain ${fq(left)} ${esc(o.yksikko||"kpl")}.</span>` :
+        `Kulu autolle <b>${eur(q*yksHinta(o))}</b> · varastoon jää ${fq(rest)} ${esc(o.yksikko||"kpl")} (${eur(rest*yksHinta(o))})`; };
+    $("#f-maara").addEventListener("input",upd); upd(); }
   if(kind==="huolto"){ const sel=$("#f-tekija"), nw=$("#f-tekija-uusi"); sel.addEventListener("change",()=>{ nw.hidden = sel.value!=="__uusi"; if(!nw.hidden) nw.focus(); }); }
   if(kind==="maksu"){ const upd=()=>{ const n=+$("#f-erat").value, sm=+$("#f-summa").value;
       $("#f-summa-l").textContent = n? "Summa vuodessa €" : "Laskun summa €";
@@ -667,8 +743,9 @@ function openForm(kind, id){
       $("#f-calc").innerHTML = !sm ? "Anna summa, niin näet erän suuruuden ja seuraavan eräpäivän." :
         (n>1? `${n} erää à <b>${eur(sm/n)}</b>` : n? `Kerran vuodessa <b>${eur(sm)}</b>` : `Lasku <b>${eur(sm)}</b>`) + (e? ` · seuraava eräpäivä <b>${dstr(e.pvm)}</b>` : " · ei tulevia eriä"); };
     ["#f-erat","#f-summa","#f-alku","#f-loppu"].forEach(s=>$(s).addEventListener("input",upd)); $("#f-erat").addEventListener("change",upd); upd(); }
-  const del=$("#f-del"); if(del){ del.onclick=async()=>{ if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent="Vahvista poisto"; return; }
-      const L=listFor(kind); L.splice(L.findIndex(r=>r.id===rec.id),1); await commit(); toast("Poistettu"); closeForm(); }; }
+  const del=$("#f-del"); if(del){ del.onclick=async()=>{ if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent= kind==="osa"&&kaytot(rec.id).length ? "Vahvista: poistaa myös osan käytöt autoista" : "Vahvista poisto"; return; }
+      if(kind==="osa"){ S.cars.forEach(c=>{ const L=carOsat(c); for(let i=L.length-1;i>=0;i--) if(L[i].varastoId===rec.id) L.splice(i,1); }); }
+      const L=listFor(kind); L.splice(L.findIndex(r=>r.id===rec.id),1); await commit(); toast(kind==="kaytto"?"Käyttö poistettu, määrä palautettu varastoon":"Poistettu"); closeForm(); }; }
   $("#sheet").onsubmit = async e=>{ e.preventDefault(); if(ro) return; await save(kind, rec); };
   setTimeout(()=>{ const f=ov.querySelector("input:not([type=checkbox])"); f&&f.focus(); },30);
 }
@@ -693,9 +770,27 @@ async function save(kind, rec){
     data={nimi:$("#f-nimi").value.trim(), tyyppi:$("#f-tyyppi").value, erat:n, summa:num("#f-summa"), alku:$("#f-alku").value, loppu:n?($("#f-loppu").value||null):null, huom:$("#f-huom").value.trim()};
     if(!data.nimi||!data.summa||!data.alku){ err.hidden=false; err.textContent="Täytä nimi, summa ja eräpäivä."; return; }
     if(data.loppu && data.loppu<data.alku){ err.hidden=false; err.textContent="Päättymispäivä on ennen ensimmäistä eräpäivää."; return; }
+  } else if(kind==="kaytto"){
+    const o=ostoById($("#f-osto").value); const left=jaljella(o, rec?.id);
+    data={varastoId:o.id, maara:num("#f-maara"), asennus:$("#f-asennus").value, odo:num("#f-odo"), huom:$("#f-huom").value.trim()};
+    if(!(data.maara>0)||!data.asennus){ err.hidden=false; err.textContent="Anna käytetty määrä ja asennuspäivä."; return; }
+    if(data.maara>left+1e-9){ err.hidden=false; err.textContent=`Varastossa on vain ${fq(left)} ${o.yksikko||"kpl"}.`; return; }
+    const target=S.cars.find(c=>c.id===$("#f-auto").value)||curCar();
+    if(rec){ S.osat.splice(S.osat.findIndex(r=>r.id===rec.id),1); }
+    carOsat(target).push({...data, id:rec?.id||newId("k"), luotu:rec?.luotu||new Date().toISOString(), ...(rec?{muokattu:new Date().toISOString()}:{})});
+    await commit(); toast(target.id===S.active?"Kirjattu":`Kirjattu autolle ${carShort(target.id)}`); closeForm(); return;
   } else {
-    data={nimi:$("#f-nimi").value.trim(), luokka:$("#f-luokka").value, kauppa:$("#f-kauppa").value.trim(), hankinta:$("#f-hankinta").value, hinta:num("#f-hinta"), asennus:$("#f-asennus").value||null, odo:num("#f-odo"), huom:$("#f-huom").value.trim()};
-    if(!data.nimi||!data.hankinta||data.hinta==null){ err.hidden=false; err.textContent="Täytä osan nimi, hankintapäivä ja hinta."; return; }
+    data={nimi:$("#f-nimi").value.trim(), luokka:$("#f-luokka").value, kauppa:$("#f-kauppa").value.trim(), hankinta:$("#f-hankinta").value, hinta:num("#f-hinta"), maara:num("#f-maara"), yksikko:$("#f-yks").value, auto:$("#f-auto").value||null, huom:$("#f-huom").value.trim()};
+    if(!data.nimi||!data.hankinta||data.hinta==null||!(data.maara>0)){ err.hidden=false; err.textContent="Täytä osan nimi, määrä, hinta ja ostopäivä."; return; }
+    if(rec && kaytetty(rec.id)>data.maara+1e-9){ err.hidden=false; err.textContent=`Osasta on jo käytetty ${fq(kaytetty(rec.id))} ${rec.yksikko||"kpl"}, joten määrä ei voi olla sitä pienempi.`; return; }
+    const heti=$("#f-heti")?.checked;
+    if(heti && !$("#f-asennus").value){ err.hidden=false; err.textContent="Anna asennuspäivä."; return; }
+    if(!rec && heti){ const id=newId("v"); S.varasto.push({...data, id, luotu:new Date().toISOString()});
+      const target=S.cars.find(c=>c.id===data.auto)||curCar();
+      carOsat(target).push({id:newId("k"), varastoId:id, maara:data.maara, asennus:$("#f-asennus").value, odo:num("#f-odo"), huom:"", luotu:new Date().toISOString()});
+      await commit();
+      if(data.kauppa && !(S.settings.kaupat||[]).includes(data.kauppa)) await saveSettings({...S.settings, kaupat:[...(S.settings.kaupat||[]), data.kauppa]}, true);
+      toast("Kirjattu ja asennettu"); closeForm(); return; }
   }
   const btn=$("#f-save"); btn.disabled=true;
   try{
@@ -720,6 +815,10 @@ async function exportCsv(kind){
   if(kind==="tank"){ head=["Päivä","Mittari","Matka","Litrat","€/l","Summa","l/100km","Polttoaine","Huomio"]; rows=fuelRows().map(r=>[r.pvm,r.odo,r.trip??"",r.litrat,r.hinta,r.summa.toFixed(2),r.l100!=null?r.l100.toFixed(2):"",r.polttoaine,r.huom||""]); name="auto_tankkaukset.csv"; }
   else if(kind==="huolto"){ head=["Päivä","Mittari","Toimenpiteet","Tekijä","Työ €","Kuvaus","Muistiinpanot"]; rows=[...S.huolto].sort((a,b)=>a.pvm.localeCompare(b.pvm)).map(h=>[h.pvm,h.odo,(h.kohteet||[]).join(", "),h.tekija||"",h.tyo||0,h.kuvaus||"",h.huom||""]); name="auto_huollot.csv"; }
   else if(kind==="maksu"){ head=["Eräpäivä","Maksu","Tyyppi","Erä","Summa","Tila"]; const lim=addDays(today(),365); rows=S.maksut.flatMap(m=>maksuEvents(m,lim)).sort((a,b)=>a.pvm.localeCompare(b.pvm)).map(e=>[e.pvm,e.m.nimi,e.m.tyyppi||"",e.eria>1?`${e.era}/${e.eria}`:"",+e.summa.toFixed(2),e.pvm<=today()?"Erääntynyt":"Tuleva"]); name="auto_maksut.csv"; }
+  else if(kind==="osat"){ head=["Päivä","Tapahtuma","Osa","Luokka","Kauppa","Auto","Määrä","Yksikkö","Summa €"];
+    rows=[...S.varasto.map(o=>[o.hankinta,"Osto",o.nimi,o.luokka||"",o.kauppa||"",o.auto?carShort(o.auto):"Yhteinen",+o.maara,o.yksikko||"kpl",+(+o.hinta).toFixed(2)]),
+      ...S.varasto.flatMap(o=>kaytot(o.id).map(u=>[u.asennus,"Käyttö",o.nimi,o.luokka||"",o.kauppa||"",carShort(u.autoId),-u.maara,o.yksikko||"kpl",+kayttoKulu(u).toFixed(2)]))].sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+    name="auto_varastokirjanpito.csv"; }
   else { head=["Hankittu","Osa","Luokka","Kauppa","Hinta","Asennettu","Mittari","Huomio"]; rows=[...S.osat].sort((a,b)=>(a.hankinta||"").localeCompare(b.hankinta||"")).map(o=>[o.hankinta,o.nimi,o.luokka,o.kauppa,o.hinta,o.asennus||"",o.odo??"",o.huom||""]); name="auto_varaosat.csv"; }
   const q=v=>{ const s=String(v??"").replace(".",kind&&typeof v==="number"?",":"."); return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; };
   const csv="﻿"+[head,...rows].map(r=>r.map(q).join(";")).join("\r\n");
@@ -728,7 +827,7 @@ async function exportCsv(kind){
 
 /* ---------- tapahtumat ---------- */
 document.addEventListener("click", e=>{
-  const t=e.target.closest("[data-add],[data-edit],[data-range],[data-of],[data-export],[data-rm-iv],#iv-add,#s-save,#db-new,#db-open,#db-dl,#db-reconnect,#car-add,#car-del,[data-rm-shop],#shop-add");
+  const t=e.target.closest("[data-use],[data-add],[data-edit],[data-range],[data-of],[data-export],[data-rm-iv],#iv-add,#s-save,#db-new,#db-open,#db-dl,#db-reconnect,#car-add,#car-del,[data-rm-shop],#shop-add");
   if(!t) return;
   if(t.id==="db-new") return dbNew();
   if(t.id==="db-open") return dbOpen();
@@ -739,6 +838,7 @@ document.addEventListener("click", e=>{
     removeActiveCar(); return; }
   if(t.dataset.rmShop!=null){ const sh=readShops(); sh.splice(+t.dataset.rmShop,1); keepSettingsDraft({huoltamot:sh}); return render(); }
   if(t.id==="shop-add"){ const sh=readShops(); sh.push({nimi:"",yhteys:""}); keepSettingsDraft({huoltamot:sh}); render(); const n=$(`#sh-n-${sh.length-1}`); n&&n.focus(); return; }
+  if(t.dataset.use){ e.stopPropagation(); return openForm("kaytto", null, {osto:t.dataset.use}); }
   if(t.dataset.add) return openForm(t.dataset.add);
   if(t.dataset.edit) return openForm(t.dataset.edit, t.dataset.id);
   if(t.dataset.range){ S.range=t.dataset.range; try{localStorage.setItem("hk-range",S.range);}catch(_){} return render(); }
@@ -773,7 +873,7 @@ function activate(id){
   car.maksut=car.maksut||[]; S.tank=car.tankkaukset; S.huolto=car.huollot; S.osat=car.osat; S.maksut=car.maksut;
   S.settings={...clone(DEFAULT_GLOBAL), ...S.global, ...clone(DEFAULT_CAR), ...car.asetukset};
   S.settings.ominaisuudet={kulutus:true, varaosat:true, maksut:true, ...(car.asetukset.ominaisuudet||{})};
-  S.osatFilter="kaikki";
+  S.osatFilter="varasto";
 }
 function sync(){
   const car=curCar(); if(!car) return;
@@ -781,7 +881,7 @@ function sync(){
   const g={}, c={}; Object.entries(S.settings).forEach(([k,v])=> (GLOBAL_KEYS.includes(k)?g:c)[k]=v);
   S.global={...S.global, ...g}; car.asetukset=c;
 }
-function snapshot(){ sync(); return {sovellus:"Huoltokirja", versio:2, tallennettu:new Date().toISOString(), aktiivinen:S.active, yhteiset:S.global, autot:S.cars}; }
+function snapshot(){ sync(); return {sovellus:"Huoltokirja", versio:3, tallennettu:new Date().toISOString(), aktiivinen:S.active, yhteiset:S.global, varasto:S.varasto, autot:S.cars}; }
 function load(o){
   let cars, global;
   if(o && Array.isArray(o.autot)){ cars=o.autot; global=o.yhteiset||{}; }
@@ -795,13 +895,26 @@ function load(o){
   // vanhat huoltokirjaukset: kerää huoltamot tekijöistä
   global.huoltamot = global.huoltamot || [];
   cars.forEach(car=>car.huollot.forEach(h=>{ if(h.tekija && h.tekija!=="Itse" && !global.huoltamot.some(x=>x.nimi===h.tekija)) global.huoltamot.push({nimi:h.tekija, yhteys:""}); }));
-  S.global={...clone(DEFAULT_GLOBAL), ...global}; S.cars=cars;
+  // versio 3: ostot yhteiseen varastoon, autolle jäävät käytöt
+  const varasto = Array.isArray(o.varasto) ? o.varasto : [];
+  cars.forEach(car=>{ car.osat = car.osat.flatMap(r=>{
+    if(r.varastoId) return [r];
+    const vid="v-"+r.id; varasto.push({id:vid, nimi:r.nimi, luokka:r.luokka, kauppa:r.kauppa, hankinta:r.hankinta||r.asennus, hinta:+r.hinta||0, maara:1, yksikko:"kpl", auto:car.id, huom:r.huom||"", luotu:r.luotu});
+    return r.asennus ? [{id:r.id, varastoId:vid, maara:1, asennus:r.asennus, odo:r.odo??null, huom:"", luotu:r.luotu}] : [];
+  }); });
+  varasto.forEach(v=>{ if(!v.id) v.id=newId("v"); if(!(+v.maara)) v.maara=1; if(!v.yksikko) v.yksikko="kpl"; });
+  S.global={...clone(DEFAULT_GLOBAL), ...global}; S.cars=cars; S.varasto=varasto;
   activate(o.aktiivinen);
 }
 function switchCar(id){ sync(); activate(id); commit(); }
 function removeActiveCar(){
-  if(S.cars.length>1){ const name=S.settings.auto; S.cars=S.cars.filter(c=>c.id!==S.active); activate(S.cars[0].id); commit(); toast(`${name||"Auto"} poistettu`); }
-  else { const car=newCar(); S.cars=[car]; activate(car.id); commit(); toast("Huoltokirja tyhjennetty"); }
+  if(S.cars.length>1){ const name=S.settings.auto, gone=S.active;
+    // poistetun auton käyttämä osuus poistuu varastokirjanpidosta, sille varatut osat siirtyvät yhteisiksi
+    S.osat.forEach(u=>{ const o=ostoById(u.varastoId); if(!o) return; const k=yksHinta(o); o.maara=Math.max(0,o.maara-u.maara); o.hinta=Math.max(0,(+o.hinta||0)-k*u.maara); });
+    S.varasto=S.varasto.filter(o=>o.maara>1e-9 || kaytot(o.id).some(u=>u.autoId!==gone));
+    S.varasto.forEach(o=>{ if(o.auto===gone) o.auto=null; });
+    S.cars=S.cars.filter(c=>c.id!==gone); activate(S.cars[0].id); commit(); toast(`${name||"Auto"} poistettu`); }
+  else { const car=newCar(); S.cars=[car]; S.varasto=[]; activate(car.id); commit(); toast("Huoltokirja tyhjennetty"); }
   location.hash="#yleiskuva";
 }
 function openCarForm(){
@@ -855,7 +968,7 @@ function renderHeader(){
   if(S.pending) el.innerHTML=`<span class="dbs-warn">Tietokanta ${esc(S.pending.name)} odottaa lupaa.</span> <button id="db-reconnect">Jatka tällä tiedostolla</button>`;
   else if(S.file) el.innerHTML=`<span class="${S.fileErr?"dbs-warn":"dbs-ok"}">● Tallentuu tiedostoon ${esc(S.file.name)}${S.savedAt?" · "+S.savedAt.toLocaleTimeString("fi-FI",{hour:"2-digit",minute:"2-digit"}):""}</span>`;
   else if(IN_ARTIFACT){ let lb=null; try{ lb=localStorage.getItem(LS_KEY+"-backup"); }catch(_){}
-    const has = S.cars.some(c=>(c.id===S.active?S.tank.length+S.huolto.length+S.osat.length:c.tankkaukset.length+c.huollot.length+c.osat.length)>0);
+    const has = S.varasto.length>0 || S.cars.some(c=>(c.id===S.active?S.tank.length+S.huolto.length+S.osat.length:c.tankkaukset.length+c.huollot.length+c.osat.length)>0);
     const old = !lb || (Date.now()-new Date(lb))>30*86400000;
     el.innerHTML = has && old ? `<span class="dbs-warn">● Tiedot ovat vain tässä selaimessa${lb?", varmuuskopio "+new Date(lb).toLocaleDateString("fi-FI"):", varmuuskopiota ei ole otettu"}.</span> <button id="db-dl">Lataa varmuuskopio</button>`
       : `<span class="dbs-ok">● Tiedot tallentuvat tähän selaimeen${lb?" · varmuuskopio "+new Date(lb).toLocaleDateString("fi-FI"):""}</span>`; }
@@ -869,7 +982,7 @@ function renderHeader(){
 })();
 
 /* ---------- versio ja päivitykset ---------- */
-const VERSIO = "1.3.0", VERSIO_PVM = "2026-11-25";
+const VERSIO = "1.4.0", VERSIO_PVM = "2026-11-25";
 const UPDATE_URL = "https://jeppe1984.github.io/Huoltokirja/version.json";
 const HOME_URL = "https://jeppe1984.github.io/Huoltokirja/";
 const newer = (a,b) => { const x=String(a).split(".").map(Number), y=String(b).split(".").map(Number); for(let i=0;i<3;i++){ if((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); } return false; };

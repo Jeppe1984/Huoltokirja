@@ -8,7 +8,7 @@ Sähköinen huoltokirja autoille ja moottoripyörille. Yksi HTML-tiedosto, joka 
 
 - **Tankkaukset ja kulutus** – keskikulutus (l/100 km), polttoainekulut, kulutuskäyrä
 - **Huollot** – huoltohistoria leimoina, tehdyt toimenpiteet, työn hinta, huoltamo
-- **Varaosat** – ostot, ostopaikat, asennuspäivät ja varastossa odottavat osat
+- **Varaosat ja varasto** – yhteinen varasto kaikille autoille, määrät ja yksiköt (kpl, l, kg…), osittainen käyttö ja varastokirjanpito: ostot, käytöt autoittain ja jäljellä olevan varaston arvo
 - **Huoltomuistutukset** – huoltovälit kilometreinä ja kuukausina, katsastuspäivä
 - **Vakuutukset ja verot** – vuosisumma ja erien määrä tai yksittäinen lasku; tulevat eräpäivät näkyvät muistutuksissa ja erääntyneet erät kokonaiskuluissa
 - **Kulut** – kokonaiskulut, kilometrihinta, kuukausikulu ja kuukausittainen kaavio
@@ -40,11 +40,12 @@ Tietokanta on luettavaa JSON:ia:
 ```json
 {
   "sovellus": "Huoltokirja",
-  "versio": 2,
+  "versio": 3,
   "yhteiset": { "huoltamot": [], "kaupat": [], "luokat": [], "polttoaineet": [] },
+  "varasto": [ { "id": "…", "nimi": "Moottoriöljy 0W-20", "maara": 5, "yksikko": "l", "hinta": 45, "auto": null } ],
   "autot": [
     { "id": "…", "asetukset": { "auto": "Toyota Yaris", "rekisteri": "ABC-123", "huoltovalit": [] },
-      "tankkaukset": [], "huollot": [], "osat": [] }
+      "tankkaukset": [], "huollot": [], "osat": [], "maksut": [] }
   ]
 }
 ```
@@ -59,6 +60,7 @@ Ideoiden ja ilmoitusten jättäminen vaatii ilmaisen GitHub-tilin.
 
 ## Versiot
 
+- **1.4.0** (25.11.2026) – Yhteinen varaosavarasto, määrät ja osittainen käyttö, varastokirjanpito
 - **1.3.0** (25.11.2026) – Versionumero näkyviin ja ilmoitus uudesta versiosta
 - **1.2.0** (25.11.2026) – Vakuutukset ja verot eräpäivineen; huoltamon valinta korjattu
 - **1.1.0** (16.11.2026) – Monta autoa, seurattavien asioiden valinta, huoltamot, palautelomakkeet
