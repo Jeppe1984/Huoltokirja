@@ -29,7 +29,9 @@ Kun pidät `.json`-tiedostoa esimerkiksi OneDrivessa tai Dropboxissa, sama huolt
 
 ## Käyttö ilman verkkoa
 
-Lataa `index.html` omalle koneellesi ja avaa se selaimessa. Sivu toimii samoin kuin verkossa. Fontit ladataan Google Fontsista, ja ilman verkkoyhteyttä selain käyttää omia fonttejaan.
+Avaa sivu ja tallenna se omalle koneellesi (Ctrl+S, tallennusmuodoksi *Verkkosivu, vain HTML*) tai lataa `index.html` tästä reposta. Avaa tiedosto selaimessa: sivu toimii samoin kuin verkossa.
+
+Sivun alareunassa näkyy käytössä oleva versio. Kun ladattu sivu avataan verkkoyhteyden ollessa päällä, se tarkistaa tiedostosta `version.json`, onko uudempi versio saatavilla, ja kertoo siitä sivun yläreunassa. Päivitä tallentamalla uusi versio vanhan tiedoston päälle. Kirjaukset eivät ole sivutiedostossa, joten ne säilyvät. Tarkistuksessa ladataan vain versiotieto, eikä mitään omia tietojasi lähetetä. Fontit ladataan Google Fontsista, ja ilman verkkoyhteyttä selain käyttää omia fonttejaan.
 
 ## Tietokannan muoto
 
@@ -54,6 +56,13 @@ Onko sinulla idea, miten huoltokirjasta saisi paremman? [**Ehdota parannusta**](
 Jos jokin ei toimi, [ilmoita virheestä](https://github.com/Jeppe1984/Huoltokirja/issues/new?template=virhe.yml). Ilmoitukset ovat julkisia, joten älä liitä niihin omia tietojasi.
 
 Ideoiden ja ilmoitusten jättäminen vaatii ilmaisen GitHub-tilin.
+
+## Versiot
+
+- **1.3.0** (25.11.2026) – Versionumero näkyviin ja ilmoitus uudesta versiosta
+- **1.2.0** (25.11.2026) – Vakuutukset ja verot eräpäivineen; huoltamon valinta korjattu
+- **1.1.0** (16.11.2026) – Monta autoa, seurattavien asioiden valinta, huoltamot, palautelomakkeet
+- **1.0.0** (16.11.2026) – Ensimmäinen julkaisu
 
 ## Huomioita
 

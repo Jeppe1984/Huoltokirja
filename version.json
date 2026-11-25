@@ -1,0 +1,10 @@
+{
+  "versio": "1.3.0",
+  "pvm": "2026-11-25",
+  "muutokset": [
+    "Versionumero näkyy sivun alareunassa",
+    "Sivu ilmoittaa, kun uusi versio on saatavilla",
+    "Vakuutukset ja verot eräpäivineen (1.2.0)",
+    "Huoltamon valinta huoltoon korjattu (1.2.0)"
+  ]
+}
